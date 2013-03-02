@@ -1,6 +1,6 @@
 /* 
 
-  This is SGLIB version 1.0.3
+  This is SGLIB version 1.0.4
 
   (C) by Marian Vittek, Bratislava, http://www.xref-tech.com/sglib, 2003-5
 
@@ -10,6 +10,8 @@
   Software license or under terms of GNU Public License.  If you need
   to use a derivative form in a commercial project, or you need sglib
   under any other license conditions, contact the author.
+
+
 
 */
 
@@ -493,7 +495,7 @@
 
 #define SGLIB_SORTED_LIST_FIND_MEMBER(type, list, elem, comparator, next, member) {\
   type *_p_;\
-  int _cmpres_;\
+  int _cmpres_ = 1;\
   for(_p_ = (list); _p_!=NULL && (_cmpres_=comparator(_p_, (elem))) < 0; _p_=_p_->next) ;\
   if (_cmpres_ != 0) (member) = NULL;\
   else (member) = _p_;\
@@ -501,17 +503,16 @@
 
 #define SGLIB_SORTED_LIST_IS_MEMBER(type, list, elem, comparator, next, result) {\
   type *_p_;\
-  int _cmpres_;\
-  for(_p_ = (list); _p_!=NULL && (_cmpres_=comparator(_p_, (elem))) < 0; _p_=_p_->next) ;\
-  while (_p_ != NULL && _p_ != (elem) && (_cmpres_ = comparator(_p_, (elem))) == 0) _p_=_p_->next;\
+  for(_p_ = (list); _p_!=NULL && comparator(_p_, (elem)) < 0; _p_=_p_->next) ;\
+  while (_p_ != NULL && _p_ != (elem) && comparator(_p_, (elem)) == 0) _p_=_p_->next;\
   (result) = (_p_ == (elem));\
 }
 
 #define SGLIB_SORTED_LIST_FIND_MEMBER_OR_PLACE(type, list, elem, comparator, next, comparator_result, member_ptr) {\
+  (comparator_result) = -1;\
   for((member_ptr) = &(list); \
       *(member_ptr)!=NULL && ((comparator_result)=comparator((*member_ptr), (elem))) < 0; \
       (member_ptr) = &(*(member_ptr))->next) ;\
-  if (*(member_ptr) == NULL) (comparator_result) = -1;\
 }
 
 #define SGLIB_SORTED_LIST_LEN(type, list, next, result) {\
@@ -1932,8 +1933,12 @@ void sglib___##type##_consistency_check(type *t) {\
 #define SGLIB_ARRAY_ELEMENTS_EXCHANGER(type, a, i, j) {type _sgl_aee_tmp_; _sgl_aee_tmp_=(a)[(i)]; (a)[(i)]=(a)[(j)]; (a)[(j)]= _sgl_aee_tmp_;}
 
 
-#define SGLIB_NUMERIC_COMPARATOR(x, y) ((int)((x) - (y)))
-#define SGLIB_REVERSE_NUMERIC_COMPARATOR(x, y) ((int)((y) - (x)))
+#define SGLIB_SAFE_NUMERIC_COMPARATOR(x, y) (((x)>(y)?1:((x)<(y)?-1:0)))
+#define SGLIB_SAFE_REVERSE_NUMERIC_COMPARATOR(x, y) (((x)>(y)?-1:((x)<(y)?1:0)))
+#define SGLIB_FAST_NUMERIC_COMPARATOR(x, y) ((int)((x) - (y)))
+#define SGLIB_FAST_REVERSE_NUMERIC_COMPARATOR(x, y) ((int)((y) - (x)))
+#define SGLIB_NUMERIC_COMPARATOR(x, y) SGLIB_SAFE_NUMERIC_COMPARATOR(x, y)
+#define SGLIB_REVERSE_NUMERIC_COMPARATOR(x, y) SGLIB_SAFE_REVERSE_NUMERIC_COMPARATOR(x, y)
 
 #ifndef SGLIB_MAX_TREE_DEEP
 #define SGLIB_MAX_TREE_DEEP 128
@@ -1941,7 +1946,7 @@ void sglib___##type##_consistency_check(type *t) {\
 
 #ifndef SGLIB_HASH_TAB_SHIFT_CONSTANT
 #define SGLIB_HASH_TAB_SHIFT_CONSTANT 16381   /* should be a prime */
-/* #define SGLIB_HASH_TAB_SHIFT_CONSTANT 536870912  for large tables */
+/* #define SGLIB_HASH_TAB_SHIFT_CONSTANT 536870912*/   /* for large tables :) */
 #endif
 
 #endif /* _SGLIB__h_ */

@@ -14,7 +14,7 @@
 
 #define MAX_PARAMS 100
 
-struct iq {int a[MAX_PARAMS]; int i,j;};
+typedef struct iq {int a[MAX_PARAMS]; int i,j;} iq;
 SGLIB_DEFINE_QUEUE_FUNCTIONS(iq, int, a, i, j, MAX_PARAMS);
 
 int main(int argc, char **argv) {
