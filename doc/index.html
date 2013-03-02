@@ -31,7 +31,7 @@
 <li><a href="#api1">Application Interface - level 1</a>
 <ul>
 <li><a href="#array_api1">Arrays</a>
-<li><a href="#hashed_container_api1">Hashed Container</a>
+<li><a href="#hashed_container_api1">Hashed Containers</a>
 <li><a href="#list_api1">Linked Lists</a>
 <li><a href="#sorted_list_api1">Sorted Linked Lists</a>
 <li><a href="#dl_list_api1">Double Linked Lists</a>
@@ -40,7 +40,7 @@
 <li><a href="#examples">Examples</a>
 <ul>
 <li><a href="#array_exam">Arrays</a>
-<li><a href="#hashed_container_exam">Hashed Container</a>
+<li><a href="#hashed_container_exam">Hashed Containers</a>
 <li><a href="#list_exam">Linked Lists</a>
 <li><a href="#sorted_list_exam">Sorted Linked Lists</a>
 <li><a href="#dl_list_exam">Double Linked Lists</a>
@@ -140,6 +140,38 @@ is a comparator for integers numbers. By the way, the macro
 <code>SGLIB_NUMERIC_COMPARATOR</code> with this definition
 is predefined in sglib
 and you can use it withount need of your own redefinitions.
+
+
+<a name=subcomparator></a>
+
+<h3>Subcomparator</h3>
+
+
+A <a href="#comparator">comparator</a> which is induced from
+another comparator in a way that it
+makes several elements equal while otherwise preserving the original
+ordering is called a <em>subcomparator</em>. More formally, if <code>cmp</code>
+is a comparator and <code>subcmp</code> is its subcomparator, then:
+<br>
+<br>
+&nbsp; <code>cmp(x,y) &lt; 0</code> implies <code>subcmp(x,y) &lt;= 0</code>
+<br>
+and
+<br>
+&nbsp; <code>cmp(x,y) > 0</code> implies <code>subcmp(x,y) >= 0</code>
+<br>
+<br>
+Subcomparators are used in iterators to iterate over such part
+of a container which is equal to a given element. For example, let's take that we have a red black tree
+of strings ordered lexicographically.
+We can define a subcomparator comparing only the first letter
+of strings:
+<pre>
+#define strsubcmp(x, y) (x[0] - y[0])
+</pre>
+Using this subcomparator we can iterate over all strings
+starting with the same letter.
+
 
 
 
@@ -1886,8 +1918,9 @@ require a uniform interface for operations applied on the base container.
 <code><b>SGLIB_DEFINE_HASHED_CONTAINER_PROTOTYPES(type, dim, hash_function)</b></code>
 <br>
 <br>
-define headers of hashed container functions.
-Declared functions are:
+define headers of hashed container functions and iterator.
+It defines structure <em>sglib_hashed_<font  face="Arial" color="909090">type</font>_iterator</em>
+and declares functions:
 <br>
 <a href="#sglib_hashed_type_init">sglib_hashed_<font  face="Arial" color="909090">type</font>_init</a>
 <br>
@@ -1902,6 +1935,12 @@ Declared functions are:
 <a href="#sglib_hashed_type_is_member">sglib_hashed_<font  face="Arial" color="909090">type</font>_is_member</a>
 <br>
 <a href="#sglib_hashed_type_find_member">sglib_hashed_<font  face="Arial" color="909090">type</font>_find_member</a>
+<br>
+<a href="#sglib_hashed_type_it_init">sglib_hashed_<font  face="Arial" color="909090">type</font>_it_init</a>
+<br>
+<a href="#sglib_hashed_type_it_init_on_equal">sglib_hashed_<font  face="Arial" color="909090">type</font>_it_init_on_equal</a>
+<br>
+<a href="#sglib_hashed_type_it_next">sglib_hashed_<font  face="Arial" color="909090">type</font>_it_next</a>
 <dd><dl>
 <dt><b>Parameters:</b>
 
@@ -1936,6 +1975,12 @@ Defined functions are:
 <a href="#sglib_hashed_type_"is_member>sglib_hashed_<font  face="Arial" color="909090">type</font>_is_member</a>
 <br>
 <a href="#sglib_hashed_type_find_member">sglib_hashed_<font  face="Arial" color="909090">type</font>_find_member</a>
+<br>
+<a href="#sglib_hashed_type_it_init">sglib_hashed_<font  face="Arial" color="909090">type</font>_it_init</a>
+<br>
+<a href="#sglib_hashed_type_it_init_on_equal">sglib_hashed_<font  face="Arial" color="909090">type</font>_it_init_on_equal</a>
+<br>
+<a href="#sglib_hashed_type_it_next">sglib_hashed_<font  face="Arial" color="909090">type</font>_it_next</a>
 <dd><dl>
 <dt><b>Parameters:</b>
 
@@ -1991,7 +2036,7 @@ set each cell in the table to NULL.
 </td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="sglib_hashed_type_add"></a>
-<code><b>void sglib_hashed_<font  face="Arial" color="909090">type</font>_add(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem</b>)</code>
+<code><b>void sglib_hashed_<font  face="Arial" color="909090">type</font>_add(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem)</b></code>
 <br>
 <br>
 Add an element into the hashed container.
@@ -2061,7 +2106,7 @@ Add an element into the hashed container if there is no <a href="#comparator_equ
 </td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="sglib_hashed_type_delete"></a>
-<code><b>void sglib_hashed_<font  face="Arial" color="909090">type</font>_delete(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem</b>)</code>
+<code><b>void sglib_hashed_<font  face="Arial" color="909090">type</font>_delete(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem)</b></code>
 <br>
 <br>
 delete an element from a hashed container. The element must be a <a href="#pointer_equality">pointer equal</a> member of the hashed container.
@@ -2135,7 +2180,7 @@ find a <a href="#comparator_equality">comparator equal</a> element in the hashed
 </td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="sglib_hashed_type_is_member"></a>
-<code><b>int sglib_hashed_<font  face="Arial" color="909090">type</font>_is_member(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem</b>)</code>
+<code><b>int sglib_hashed_<font  face="Arial" color="909090">type</font>_is_member(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem)</b></code>
 <br>
 <br>
 determine whether an element is inside a hashed container. The element is searched using <a href="#comparator_equality">pointer equality</a>.
@@ -2170,7 +2215,7 @@ determine whether an element is inside a hashed container. The element is search
 </td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="sglib_hashed_type_find_member"></a>
-<code><b><font  face="Arial" color="909090">type</font> *sglib_hashed_<font  face="Arial" color="909090">type</font>_find_member(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem</b>)</code>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_hashed_<font  face="Arial" color="909090">type</font>_find_member(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem)</b></code>
 <br>
 <br>
 find an element in the hashed container. The element is searched using <a href="#comparator_equality">comparator equality</a>.
@@ -2183,6 +2228,130 @@ find an element in the hashed container. The element is searched using <a href="
 </dt>
 <dt><b>Returns:</b>
 <dd>The member of the container <a href="#comparator_equality">comparator equal</a> to <code>elem</code>.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS"><b>SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+
+<dd><code>type</code> - the type of the base container. It <b>must</b> be a single identifier.
+<dd><code>dim</code> - the size of the array.
+<dd><code>hash_function</code> - the hashing function mapping elements into unsigned integers.
+
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_hashed_<font face="Arial" color="909090">type</font>_it_init</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_hashed_type_it_init"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_hashed_<font  face="Arial" color="909090">type</font>_it_init(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>])</b></code>
+<br>
+<br>
+initialize an iterator <code>it</code> to run over elements of <code>table</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+
+<dd><code>it</code> - the iterator.
+
+
+<dd><code>table</code> - the hashed container.
+
+</dt>
+<dt><b>Returns:</b>
+<dd>The first iterated element or <code>NULL</code> if there is no element.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS"><b>SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+
+<dd><code>type</code> - the type of the base container. It <b>must</b> be a single identifier.
+<dd><code>dim</code> - the size of the array.
+<dd><code>hash_function</code> - the hashing function mapping elements into unsigned integers.
+
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_hashed_<font face="Arial" color="909090">type</font>_it_init_on_equal</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_hashed_type_it_init_on_equal"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_hashed_<font  face="Arial" color="909090">type</font>_it_init_on_equal(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], int (*subcomparator)(<font  face="Arial" color="909090">type</font> *, <font  face="Arial" color="909090">type</font> *), <font  face="Arial" color="909090">type</font> *equalto)</b></code>
+<br>
+<br>
+initialize an iterator <code>it</code> to run over those elements of <code>table</code> which are
+equal to <code>equalto</code>. The equality is considered with respect to the
+<code>subcomparator</code> which must be a <a href="#subcomparator">subcomparator</a>
+of the base container comparator.
+<dd><dl>
+<dt><b>Parameters:</b>
+
+<dd><code>it</code> - the iterator.
+
+
+<dd><code>table</code> - the hashed container.
+
+<dd><code>subcomparator</code> - the comparator used to find equal elements.
+<dd><code>equalto</code> - the element used as filter.
+</dt>
+<dt><b>Returns:</b>
+<dd>The first iterated element or <code>NULL</code> if there is no element equal to <code>equalto</code>.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS"><b>SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+
+<dd><code>type</code> - the type of the base container. It <b>must</b> be a single identifier.
+<dd><code>dim</code> - the size of the array.
+<dd><code>hash_function</code> - the hashing function mapping elements into unsigned integers.
+
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_hashed_<font face="Arial" color="909090">type</font>_it_next</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_hashed_type_it_next"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_hashed_<font  face="Arial" color="909090">type</font>_it_next(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it)</b></code>
+<br>
+<br>
+get the next element from the iterator <code>it</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+
+<dd><code>it</code> - the iterator.
+
+</dt>
+<dt><b>Returns:</b>
+<dd>The next iterated element or <code>NULL</code> if there is no next element.
 </dt>
 <hr size=1 width=70%>
 <font  face="Arial" size=-1 color="909090">
@@ -2247,6 +2416,9 @@ Declared functions are:
 <br><a href="#sglib_list_type_len">sglib_<font face="Arial" color="909090">type</font>_len</a>
 <br><a href="#sglib_list_type_sort">sglib_<font face="Arial" color="909090">type</font>_sort</a>
 <br><a href="#sglib_list_type_reverse">sglib_<font face="Arial" color="909090">type</font>_reverse</a>
+<br><a href="#sglib_list_type_it_init">sglib_<font face="Arial" color="909090">type</font>_it_init</a>
+<br><a href="#sglib_list_type_it_init_on_equal">sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</a>
+<br><a href="#sglib_list_type_it_next">sglib_<font face="Arial" color="909090">type</font>_it_next</a>
 
 <br>
 <dd><dl>
@@ -2282,6 +2454,9 @@ Defined functions are:
 <br><a href="#sglib_list_type_len">sglib_<font face="Arial" color="909090">type</font>_len</a>
 <br><a href="#sglib_list_type_sort">sglib_<font face="Arial" color="909090">type</font>_sort</a>
 <br><a href="#sglib_list_type_reverse">sglib_<font face="Arial" color="909090">type</font>_reverse</a>
+<br><a href="#sglib_list_type_it_init">sglib_<font face="Arial" color="909090">type</font>_it_init</a>
+<br><a href="#sglib_list_type_it_init_on_equal">sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</a>
+<br><a href="#sglib_list_type_it_next">sglib_<font face="Arial" color="909090">type</font>_it_next</a>
 
 <dd><dl>
 <dt><b>Parameters:</b>
@@ -2652,6 +2827,161 @@ reverse the list.
 </td></tr>
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_list_type_it_init"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *list)</b></code>
+<br>
+<br>
+
+initialize an iterator <code>it</code> to run over elements of <code>list</code>.
+
+<dd><dl>
+<dt><b>Parameters:</b>
+
+<dd><code>it</code> - the iterator.
+
+
+<dd><code>list</code> - the list.
+
+</dt>
+<dt><b>Returns:</b>
+
+<dd>The first iterated element or <code>NULL</code> if there is no element.
+
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_LIST_FUNCTIONS"><b>SGLIB_DEFINE_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+
+<dd><code>type</code> - the type of list elements.
+
+<dd><code>comparator</code> - the <a href="#comparator">comparator</a> used to compare elements.
+
+<dd><code>next</code> - the name of the field pointing to the <a href="#next_element">next</a> element of the list.
+
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_list_type_it_init_on_equal"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init_on_equal(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *list, int (*subcomparator)(<font  face="Arial" color="909090">type</font> *, <font  face="Arial" color="909090">type</font> *), <font  face="Arial" color="909090">type</font> *equalto)</b></code>
+<br>
+<br>
+
+initialize an iterator <code>it</code> to run over those elements of <code>list</code> which are
+equal to <code>equalto</code>. The equality is considered with respect to the
+<code>subcomparator</code> which must be a <a href="#subcomparator">subcomparator</a>
+of the <font face="Arial" size=-1 color="909090">comparator</font>.
+
+<dd><dl>
+<dt><b>Parameters:</b>
+
+<dd><code>it</code> - the iterator.
+
+
+<dd><code>list</code> - the list.
+
+
+<dd><code>subcomparator</code> - the comparator used to find equal elements.
+<dd><code>equalto</code> - the element used as filter.
+
+</dt>
+<dt><b>Returns:</b>
+
+<dd>The first iterated element or <code>NULL</code> if there is no element equal to <code>equalto</code>.
+
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_LIST_FUNCTIONS"><b>SGLIB_DEFINE_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+
+<dd><code>type</code> - the type of list elements.
+
+<dd><code>comparator</code> - the <a href="#comparator">comparator</a> used to compare elements.
+
+<dd><code>next</code> - the name of the field pointing to the <a href="#next_element">next</a> element of the list.
+
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_next</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_list_type_it_next"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_next(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it)</b></code>
+<br>
+<br>
+
+get the next element from the iterator <code>it</code>.
+
+<dd><dl>
+<dt><b>Parameters:</b>
+
+<dd><code>it</code> - the iterator.
+
+</dt>
+<dt><b>Returns:</b>
+
+<dd>The next iterated element or <code>NULL</code> if there is no next element.
+
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_LIST_FUNCTIONS"><b>SGLIB_DEFINE_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+
+<dd><code>type</code> - the type of list elements.
+
+<dd><code>comparator</code> - the <a href="#comparator">comparator</a> used to compare elements.
+
+<dd><code>next</code> - the name of the field pointing to the <a href="#next_element">next</a> element of the list.
+
+</dt>
+</font>
+</td></tr>
+
+
+
 </table>
 
 </td></tr>
@@ -2710,6 +3040,9 @@ Declared functions are:
 <br><a href="#sglib_sorted_list_type_is_member">sglib_<font face="Arial" color="909090">type</font>_is_member</a>
 <br><a href="#sglib_sorted_list_type_len">sglib_<font face="Arial" color="909090">type</font>_len</a>
 <br><a href="#sglib_sorted_list_type_sort">sglib_<font face="Arial" color="909090">type</font>_sort</a>
+<br><a href="#sglib_sorted_list_type_it_init">sglib_<font face="Arial" color="909090">type</font>_it_init</a>
+<br><a href="#sglib_sorted_list_type_it_init_on_equal">sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</a>
+<br><a href="#sglib_sorted_list_type_it_next">sglib_<font face="Arial" color="909090">type</font>_it_next</a>
 
 <br>
 <dd><dl>
@@ -2743,6 +3076,9 @@ Defined functions are:
 <br><a href="#sglib_sorted_list_type_is_member">sglib_<font face="Arial" color="909090">type</font>_is_member</a>
 <br><a href="#sglib_sorted_list_type_len">sglib_<font face="Arial" color="909090">type</font>_len</a>
 <br><a href="#sglib_sorted_list_type_sort">sglib_<font face="Arial" color="909090">type</font>_sort</a>
+<br><a href="#sglib_sorted_list_type_it_init">sglib_<font face="Arial" color="909090">type</font>_it_init</a>
+<br><a href="#sglib_sorted_list_type_it_init_on_equal">sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</a>
+<br><a href="#sglib_sorted_list_type_it_next">sglib_<font face="Arial" color="909090">type</font>_it_next</a>
 
 <dd><dl>
 <dt><b>Parameters:</b>
@@ -3051,6 +3387,156 @@ to initial sorting, when the <code>list</code> was created by other than sglib f
 </td></tr>
 
 
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_sorted_list_type_it_init"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *list)</b></code>
+<br>
+<br>
+
+initialize an iterator <code>it</code> to run over elements of <code>list</code>.
+
+<dd><dl>
+<dt><b>Parameters:</b>
+
+<dd><code>it</code> - the iterator.
+
+
+<dd><code>list</code> - the list.
+
+</dt>
+<dt><b>Returns:</b>
+
+<dd>The first iterated element or <code>NULL</code> if there is no element.
+
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_SORTED_LIST_FUNCTIONS"><b>SGLIB_DEFINE_SORTED_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+
+<dd><code>type</code> - the type of list elements.
+
+<dd><code>comparator</code> - the <a href="#comparator">comparator</a> used to compare elements.
+
+<dd><code>next</code> - the name of the field pointing to the <a href="#next_element">next</a> element of the list.
+
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_sorted_list_type_it_init_on_equal"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init_on_equal(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *list, int (*subcomparator)(<font  face="Arial" color="909090">type</font> *, <font  face="Arial" color="909090">type</font> *), <font  face="Arial" color="909090">type</font> *equalto)</b></code>
+<br>
+<br>
+
+initialize an iterator <code>it</code> to run over those elements of <code>list</code> which are
+equal to <code>equalto</code>. The equality is considered with respect to the
+<code>subcomparator</code> which must be a <a href="#subcomparator">subcomparator</a>
+of the <font face="Arial" size=-1 color="909090">comparator</font>.
+
+<dd><dl>
+<dt><b>Parameters:</b>
+
+<dd><code>it</code> - the iterator.
+
+
+<dd><code>list</code> - the list.
+
+
+<dd><code>subcomparator</code> - the comparator used to find equal elements.
+<dd><code>equalto</code> - the element used as filter.
+
+</dt>
+<dt><b>Returns:</b>
+
+<dd>The first iterated element or <code>NULL</code> if there is no element equal to <code>equalto</code>.
+
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_SORTED_LIST_FUNCTIONS"><b>SGLIB_DEFINE_SORTED_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+
+<dd><code>type</code> - the type of list elements.
+
+<dd><code>comparator</code> - the <a href="#comparator">comparator</a> used to compare elements.
+
+<dd><code>next</code> - the name of the field pointing to the <a href="#next_element">next</a> element of the list.
+
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_next</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_sorted_list_type_it_next"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_next(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it)</b></code>
+<br>
+<br>
+
+get the next element from the iterator <code>it</code>.
+
+<dd><dl>
+<dt><b>Parameters:</b>
+
+<dd><code>it</code> - the iterator.
+
+</dt>
+<dt><b>Returns:</b>
+
+<dd>The next iterated element or <code>NULL</code> if there is no next element.
+
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_SORTED_LIST_FUNCTIONS"><b>SGLIB_DEFINE_SORTED_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+
+<dd><code>type</code> - the type of list elements.
+
+<dd><code>comparator</code> - the <a href="#comparator">comparator</a> used to compare elements.
+
+<dd><code>next</code> - the name of the field pointing to the <a href="#next_element">next</a> element of the list.
+
+</dt>
+</font>
+</td></tr>
+
+
+
+
 </table>
 
 </td></tr>
@@ -3113,6 +3599,9 @@ Declared functions are:
 <br><a href="#sglib_dl_list_type_len">sglib_<font face="Arial" color="909090">type</font>_len</a>
 <br><a href="#sglib_dl_list_type_sort">sglib_<font face="Arial" color="909090">type</font>_sort</a>
 <br><a href="#sglib_dl_list_type_reverse">sglib_<font face="Arial" color="909090">type</font>_reverse</a>
+<br><a href="#sglib_dl_list_type_it_init">sglib_<font face="Arial" color="909090">type</font>_it_init</a>
+<br><a href="#sglib_dl_list_type_it_init_on_equal">sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</a>
+<br><a href="#sglib_dl_list_type_it_next">sglib_<font face="Arial" color="909090">type</font>_it_next</a>
 
 <br>
 <dd><dl>
@@ -3155,6 +3644,9 @@ Defined functions are:
 <br><a href="#sglib_dl_list_type_len">sglib_<font face="Arial" color="909090">type</font>_len</a>
 <br><a href="#sglib_dl_list_type_sort">sglib_<font face="Arial" color="909090">type</font>_sort</a>
 <br><a href="#sglib_dl_list_type_reverse">sglib_<font face="Arial" color="909090">type</font>_reverse</a>
+<br><a href="#sglib_dl_list_type_it_init">sglib_<font face="Arial" color="909090">type</font>_it_init</a>
+<br><a href="#sglib_dl_list_type_it_init_on_equal">sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</a>
+<br><a href="#sglib_dl_list_type_it_next">sglib_<font face="Arial" color="909090">type</font>_it_next</a>
 
 <dd><dl>
 <dt><b>Parameters:</b>
@@ -3750,6 +4242,161 @@ reverse the list.
 </td></tr>
 
 
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_it_init"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *list)</b></code>
+<br>
+<br>
+
+initialize an iterator <code>it</code> to run over elements of <code>list</code>.
+
+<dd><dl>
+<dt><b>Parameters:</b>
+
+<dd><code>it</code> - the iterator.
+
+
+<dd><code>list</code> - the list.
+
+</dt>
+<dt><b>Returns:</b>
+
+<dd>The first iterated element or <code>NULL</code> if there is no element.
+
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+
+<dd><code>type</code> - the type of list elements.
+
+<dd><code>comparator</code> - the <a href="#comparator">comparator</a> used to compare elements.
+
+<dd><code>previous</code> - the name of the field pointing to the <a href="#dl_previous_element">previous</a> element of the list.
+<dd><code>next</code> - the name of the field pointing to the <a href="#dl_next_element">next</a> element of the list.
+
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_it_init_on_equal"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init_on_equal(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *list, int (*subcomparator)(<font  face="Arial" color="909090">type</font> *, <font  face="Arial" color="909090">type</font> *), <font  face="Arial" color="909090">type</font> *equalto)</b></code>
+<br>
+<br>
+
+initialize an iterator <code>it</code> to run over those elements of <code>list</code> which are
+equal to <code>equalto</code>. The equality is considered with respect to the
+<code>subcomparator</code> which must be a <a href="#subcomparator">subcomparator</a>
+of the <font face="Arial" size=-1 color="909090">comparator</font>.
+
+<dd><dl>
+<dt><b>Parameters:</b>
+
+<dd><code>it</code> - the iterator.
+
+
+<dd><code>list</code> - the list.
+
+
+<dd><code>subcomparator</code> - the comparator used to find equal elements.
+<dd><code>equalto</code> - the element used as filter.
+
+</dt>
+<dt><b>Returns:</b>
+
+<dd>The first iterated element or <code>NULL</code> if there is no element equal to <code>equalto</code>.
+
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+
+<dd><code>type</code> - the type of list elements.
+
+<dd><code>comparator</code> - the <a href="#comparator">comparator</a> used to compare elements.
+
+<dd><code>previous</code> - the name of the field pointing to the <a href="#dl_previous_element">previous</a> element of the list.
+<dd><code>next</code> - the name of the field pointing to the <a href="#dl_next_element">next</a> element of the list.
+
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_next</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_it_next"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_next(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it)</b></code>
+<br>
+<br>
+
+get the next element from the iterator <code>it</code>.
+
+<dd><dl>
+<dt><b>Parameters:</b>
+
+<dd><code>it</code> - the iterator.
+
+</dt>
+<dt><b>Returns:</b>
+
+<dd>The next iterated element or <code>NULL</code> if there is no next element.
+
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+
+<dd><code>type</code> - the type of list elements.
+
+<dd><code>comparator</code> - the <a href="#comparator">comparator</a> used to compare elements.
+
+<dd><code>previous</code> - the name of the field pointing to the <a href="#dl_previous_element">previous</a> element of the list.
+<dd><code>next</code> - the name of the field pointing to the <a href="#dl_next_element">next</a> element of the list.
+
+</dt>
+</font>
+</td></tr>
+
+
+
+
 </table>
 
 </td></tr>
@@ -3805,7 +4452,7 @@ reverse the list.
 <code><b>SGLIB_DEFINE_RBTREE_PROTOTYPES</b></code>
 </td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
 </td><td VALIGN="top" WIDTH="70%">
-<code><b>SGLIB_DEFINE_RBTREE_PROTOTYPES(type, left, right, colorbit, comparator, RED, BLACK)</b></code>
+<code><b>SGLIB_DEFINE_RBTREE_PROTOTYPES(type, left, right, colorbit, comparator)</b></code>
 <br>
 <br>
 define headers for red black tree implementation.
@@ -3818,6 +4465,9 @@ Declared functions are:
 <br><a href="#sglib_rbtree_type_find_member">sglib_<font face="Arial" color="909090">type</font>_find_member</a>
 <br><a href="#sglib_rbtree_type_is_member">sglib_<font face="Arial" color="909090">type</font>_is_member</a>
 <br><a href="#sglib_rbtree_type_len">sglib_<font face="Arial" color="909090">type</font>_len</a>
+<br><a href="#sglib_rbtree_type_it_init">sglib_<font face="Arial" color="909090">type</font>_it_init</a>
+<br><a href="#sglib_rbtree_type_it_init_on_equal">sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</a>
+<br><a href="#sglib_rbtree_type_it_next">sglib_<font face="Arial" color="909090">type</font>_it_next</a>
 
 <br>
 <dd><dl>
@@ -3828,8 +4478,6 @@ Declared functions are:
 <dd><code>right</code> - the name of the field containing <a href="#left_right_element">right</a> subtree of a node.
 <dd><code>colorbit</code> - the name of the field containing the <a href="#rb_color">color</a> of a node.
 <dd><code>comparator</code> - a <a href="#comparator">comparator</a> used to compare elements.
-<dd><code>RED</code> - a constant for red color.
-<dd><code>BLACK</code> - a constant for black color.
 
 </dd>
 </td></tr>
@@ -3839,7 +4487,7 @@ Declared functions are:
 </td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="SGLIB_DEFINE_RBTREE_FUNCTIONS"></a>
-<code><b>SGLIB_DEFINE_RBTREE_FUNCTIONS(type, left, right, colorbit, comparator, RED, BLACK)</b></code>
+<code><b>SGLIB_DEFINE_RBTREE_FUNCTIONS(type, left, right, colorbit, comparator)</b></code>
 <br>
 <br>
 define functions for manipulating balanced red-black trees.
@@ -3852,6 +4500,9 @@ Defined functions are:
 <br><a href="#sglib_rbtree_type_find_member">sglib_<font face="Arial" color="909090">type</font>_find_member</a>
 <br><a href="#sglib_rbtree_type_is_member">sglib_<font face="Arial" color="909090">type</font>_is_member</a>
 <br><a href="#sglib_rbtree_type_len">sglib_<font face="Arial" color="909090">type</font>_len</a>
+<br><a href="#sglib_rbtree_type_it_init">sglib_<font face="Arial" color="909090">type</font>_it_init</a>
+<br><a href="#sglib_rbtree_type_it_init_on_equal">sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</a>
+<br><a href="#sglib_rbtree_type_it_next">sglib_<font face="Arial" color="909090">type</font>_it_next</a>
 
 <dd><dl>
 <dt><b>Parameters:</b>
@@ -3861,8 +4512,6 @@ Defined functions are:
 <dd><code>right</code> - the name of the field containing <a href="#left_right_element">right</a> subtree of a node.
 <dd><code>colorbit</code> - the name of the field containing the <a href="#rb_color">color</a> of a node.
 <dd><code>comparator</code> - a <a href="#comparator">comparator</a> used to compare elements.
-<dd><code>RED</code> - a constant for red color.
-<dd><code>BLACK</code> - a constant for black color.
 
 </dd>
 </td></tr>
@@ -3904,8 +4553,6 @@ insert an element into a tree.
 <dd><code>right</code> - the name of the field containing <a href="#left_right_element">right</a> subtree of a node.
 <dd><code>colorbit</code> - the name of the field containing the <a href="#rb_color">color</a> of a node.
 <dd><code>comparator</code> - a <a href="#comparator">comparator</a> used to compare elements.
-<dd><code>RED</code> - a constant for red color.
-<dd><code>BLACK</code> - a constant for black color.
 
 </dt>
 </font>
@@ -3944,8 +4591,6 @@ insert an element if there is no <a href="#comparator_equality">comparator equal
 <dd><code>right</code> - the name of the field containing <a href="#left_right_element">right</a> subtree of a node.
 <dd><code>colorbit</code> - the name of the field containing the <a href="#rb_color">color</a> of a node.
 <dd><code>comparator</code> - a <a href="#comparator">comparator</a> used to compare elements.
-<dd><code>RED</code> - a constant for red color.
-<dd><code>BLACK</code> - a constant for black color.
 
 </dt>
 </font>
@@ -3980,8 +4625,6 @@ delete an element. The element must be a member of the <em>tree</em>, it is look
 <dd><code>right</code> - the name of the field containing <a href="#left_right_element">right</a> subtree of a node.
 <dd><code>colorbit</code> - the name of the field containing the <a href="#rb_color">color</a> of a node.
 <dd><code>comparator</code> - a <a href="#comparator">comparator</a> used to compare elements.
-<dd><code>RED</code> - a constant for red color.
-<dd><code>BLACK</code> - a constant for black color.
 
 </dt>
 </font>
@@ -4020,8 +4663,6 @@ find a <a href="#comparator_equality">comparator equal</a> element in the tree a
 <dd><code>right</code> - the name of the field containing <a href="#left_right_element">right</a> subtree of a node.
 <dd><code>colorbit</code> - the name of the field containing the <a href="#rb_color">color</a> of a node.
 <dd><code>comparator</code> - a <a href="#comparator">comparator</a> used to compare elements.
-<dd><code>RED</code> - a constant for red color.
-<dd><code>BLACK</code> - a constant for black color.
 
 </dt>
 </font>
@@ -4059,8 +4700,6 @@ determine whether an element is inside a tree. The element is searched using <a 
 <dd><code>right</code> - the name of the field containing <a href="#left_right_element">right</a> subtree of a node.
 <dd><code>colorbit</code> - the name of the field containing the <a href="#rb_color">color</a> of a node.
 <dd><code>comparator</code> - a <a href="#comparator">comparator</a> used to compare elements.
-<dd><code>RED</code> - a constant for red color.
-<dd><code>BLACK</code> - a constant for black color.
 
 </dt>
 </font>
@@ -4098,8 +4737,6 @@ find an element in the tree. The element is searched using <a href="#comparator_
 <dd><code>right</code> - the name of the field containing <a href="#left_right_element">right</a> subtree of a node.
 <dd><code>colorbit</code> - the name of the field containing the <a href="#rb_color">color</a> of a node.
 <dd><code>comparator</code> - a <a href="#comparator">comparator</a> used to compare elements.
-<dd><code>RED</code> - a constant for red color.
-<dd><code>BLACK</code> - a constant for black color.
 
 </dt>
 </font>
@@ -4134,8 +4771,138 @@ compute the length of a tree, i.e. compute how many elements is inside.
 <dd><code>right</code> - the name of the field containing <a href="#left_right_element">right</a> subtree of a node.
 <dd><code>colorbit</code> - the name of the field containing the <a href="#rb_color">color</a> of a node.
 <dd><code>comparator</code> - a <a href="#comparator">comparator</a> used to compare elements.
-<dd><code>RED</code> - a constant for red color.
-<dd><code>BLACK</code> - a constant for black color.
+
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_rbtree_type_it_init"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *tree)</b></code>
+<br>
+<br>
+initialize an iterator <code>it</code> to run over elements of <code>tree</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+
+<dd><code>it</code> - the iterator.
+
+
+<dd><code>tree</code> - the tree.
+
+</dt>
+<dt><b>Returns:</b>
+<dd>The first iterated element or <code>NULL</code> if there is no element.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_RBTREE_FUNCTIONS"><b>SGLIB_DEFINE_RBTREE_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+
+<dd><code>type</code> - the type of tree elements.
+<dd><code>left</code> - the name of the field containing <a href="#left_right_element">left</a> subtree of a node.
+<dd><code>right</code> - the name of the field containing <a href="#left_right_element">right</a> subtree of a node.
+<dd><code>colorbit</code> - the name of the field containing the <a href="#rb_color">color</a> of a node.
+<dd><code>comparator</code> - a <a href="#comparator">comparator</a> used to compare elements.
+
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_rbtree_type_it_init_on_equal"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init_on_equal(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *tree, int (*subcomparator)(<font  face="Arial" color="909090">type</font> *, <font  face="Arial" color="909090">type</font> *), <font  face="Arial" color="909090">type</font> *equalto)</b></code>
+<br>
+<br>
+initialize an iterator <code>it</code> to run over those elements of the <code>tree</code> which are
+equal to <code>equalto</code>. The equality is considered with respect to the
+<code>subcomparator</code> which must be a <a href="#subcomparator">subcomparator</a>
+of the <font  face="Arial" size=-1 color="909090">comparator</font>.
+<dd><dl>
+<dt><b>Parameters:</b>
+
+<dd><code>it</code> - the iterator.
+
+
+<dd><code>tree</code> - the tree.
+
+<dd><code>subcomparator</code> - the comparator used to find equal elements.
+<dd><code>equalto</code> - the element used as filter.
+</dt>
+<dt><b>Returns:</b>
+<dd>The first iterated element or <code>NULL</code> if there is no element equal to <code>equalto</code>.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_RBTREE_FUNCTIONS"><b>SGLIB_DEFINE_RBTREE_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+
+<dd><code>type</code> - the type of tree elements.
+<dd><code>left</code> - the name of the field containing <a href="#left_right_element">left</a> subtree of a node.
+<dd><code>right</code> - the name of the field containing <a href="#left_right_element">right</a> subtree of a node.
+<dd><code>colorbit</code> - the name of the field containing the <a href="#rb_color">color</a> of a node.
+<dd><code>comparator</code> - a <a href="#comparator">comparator</a> used to compare elements.
+
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_next</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_rbtree_type_it_next"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_next(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it)</b></code>
+<br>
+<br>
+get the next element from the iterator <code>it</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+
+<dd><code>it</code> - the iterator.
+
+</dt>
+<dt><b>Returns:</b>
+<dd>The next iterated element or <code>NULL</code> if there is no next element.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_RBTREE_FUNCTIONS"><b>SGLIB_DEFINE_RBTREE_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+
+<dd><code>type</code> - the type of tree elements.
+<dd><code>left</code> - the name of the field containing <a href="#left_right_element">left</a> subtree of a node.
+<dd><code>right</code> - the name of the field containing <a href="#left_right_element">right</a> subtree of a node.
+<dd><code>colorbit</code> - the name of the field containing the <a href="#rb_color">color</a> of a node.
+<dd><code>comparator</code> - a <a href="#comparator">comparator</a> used to compare elements.
 
 </dt>
 </font>
@@ -4198,11 +4965,11 @@ int main(int argc, char **argv) {
   int a[MAX_ELEMS];
   size = argc-1;
   for (i=0; i&lt;size; i++) {
-	sscanf(argv[i+1],"%d", &a[i]);
+    sscanf(argv[i+1],"%d", &a[i]);
   }
   SGLIB_ARRAY_SINGLE_QUICK_SORT(int, a, size, SGLIB_NUMERIC_COMPARATOR);
   for (i=0; i&lt;size; i++) {
-	printf("%d ", a[i]);
+    printf("%d ", a[i]);
   }
   printf("\n");
   return(0);
@@ -4236,11 +5003,11 @@ int main(int argc, char **argv) {
   int a[MAX_ELEMS];
   size = argc-1;
   for (i=0; i&lt;size; i++) {
-	sscanf(argv[i+1],"%d", &a[i]);
+    sscanf(argv[i+1],"%d", &a[i]);
   }
   sglib_int_array_heap_sort(a, size);
   for (i=0; i&lt;size; i++) {
-	printf("%d ", a[i]);
+    printf("%d ", a[i]);
   }
   printf("\n");
   return(0);
@@ -4273,16 +5040,16 @@ int main(int argc, char **argv) {
   int a[MAX_ELEMS];
   size = argc-1;
   for (i=0; i&lt;size; i++) {
-	sscanf(argv[i+1],"%d", &a[i]);
+    sscanf(argv[i+1],"%d", &a[i]);
   }
   for(i=1; i&lt;size; i++) {
-	tmp = a[i];
-	SGLIB_ARRAY_BINARY_SEARCH(int, a, 0, i, tmp, SGLIB_NUMERIC_COMPARATOR, found, index);
-	memmove(a+index+1, a+index, (i-index)*sizeof(int));
-	a[index]=tmp;
+    tmp = a[i];
+    SGLIB_ARRAY_BINARY_SEARCH(int, a, 0, i, tmp, SGLIB_NUMERIC_COMPARATOR, found, index);
+    memmove(a+index+1, a+index, (i-index)*sizeof(int));
+    a[index]=tmp;
   }
   for (i=0; i&lt;size; i++) {
-	printf("%d ", a[i]);
+    printf("%d ", a[i]);
   }
   printf("\n");
   return(0);
@@ -4293,80 +5060,6 @@ int main(int argc, char **argv) {
 
 </center>
 
-
-
-
-<a name="hashed_container_exam"></a>
-
-<br><br>
-<h2>Hashed Container Sample</h2>
-
-<center>
-
-<table width=90% border=1 CELLPADDING="10" CELLSPACING="1">
-<tr><td>
-<pre>
-// This program uses hash table containing lists
-// to remove multiple occurences of its parameters
-// For example:
-//   a.out 1 3 5 2 3 1 7 11 33
-// writes:
-//   11 1 2 33 3 5 7
-
-#include &lt;stdio.h>
-#include &lt;stdlib.h>
-#include &lt;malloc.h>
-#include "sglib.h"
-
-#define HASH_TAB_SIZE  10
-
-typedef struct ilist {
-  int i;
-  struct ilist *next;
-} ilist;
-
-ilist *htab[HASH_TAB_SIZE];
-
-#define ILIST_COMPARATOR(e1, e2)    (e1->i - e2->i)
-
-unsigned int ilist_hash_function(ilist *e) {
-  return(e->i);
-}
-
-SGLIB_DEFINE_LIST_FUNCTIONS(ilist, ILIST_COMPARATOR, next)
-SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS(ilist, HASH_TAB_SIZE, ilist_hash_function)
-
-int main(int argc, char **argv) {
-  int           i, ai,aj, n;
-  struct ilist  ii, *nn,*ll;
-
-  sglib_hashed_ilist_init(htab);
-
-  for (i=1; i&lt;argc; i++) {
-    sscanf(argv[i],"%d", &n);
-    ii.i = n;
-    if (sglib_hashed_ilist_find_member(htab, &ii) == NULL) {
-      nn = malloc(sizeof(struct ilist));
-      nn->i = n;
-      sglib_hashed_ilist_add(htab, nn);
-    }
-  }
-
-  // In the future, this will done better with iterators
-  for(i=0; i&lt;HASH_TAB_SIZE; i++) {
-    SGLIB_LIST_MAP_ON_ELEMENTS(ilist, htab[i], ll, next, {
-      printf("%d ", ll->i);
-    });
-  }
-  printf("\n");
-
-  return(0);
-}
-<pre>
-</td></tr>
-</table>
-
-</center>
 
 
 
@@ -4394,8 +5087,8 @@ int main(int argc, char **argv) {
 #include "sglib.h"
 
 struct ilist {
-	int i;
-	struct ilist *next_ptr;
+    int i;
+    struct ilist *next_ptr;
 };
 
 #define ILIST_COMPARATOR(e1, e2) (e1->i - e2->i)
@@ -4405,10 +5098,10 @@ int main(int argc, char **argv) {
   struct ilist *l, *the_list, *ll;
   the_list = NULL;
   for (i=1; i&lt;argc; i++) {
-	sscanf(argv[i],"%d", &a);
-	l = malloc(sizeof(struct ilist));
-	l->i = a;
-	SGLIB_LIST_ADD(struct ilist, the_list, l, next_ptr);
+    sscanf(argv[i],"%d", &a);
+    l = malloc(sizeof(struct ilist));
+    l->i = a;
+    SGLIB_LIST_ADD(struct ilist, the_list, l, next_ptr);
   }
   // it is useless, but anyway, get parameters in the right order
   SGLIB_LIST_REVERSE(struct ilist, the_list, next_ptr);
@@ -4416,9 +5109,13 @@ int main(int argc, char **argv) {
   SGLIB_LIST_SORT(struct ilist, the_list, ILIST_COMPARATOR, next_ptr);
   // print the list
   SGLIB_LIST_MAP_ON_ELEMENTS(struct ilist, the_list, ll, next_ptr, {
-	printf("%d ", ll->i);
+    printf("%d ", ll->i);
   });
   printf("\n");
+  // free all
+  SGLIB_LIST_MAP_ON_ELEMENTS(struct ilist, the_list, ll, next_ptr, {
+    free(ll);
+  });
   return(0);
 }
 <pre>
@@ -4452,8 +5149,8 @@ int main(int argc, char **argv) {
 #include "sglib.h"
 
 struct ilist {
-	int i;
-	struct ilist *next_ptr;
+    int i;
+    struct ilist *next_ptr;
 };
 
 #define ILIST_COMPARATOR(e1, e2) (e1->i - e2->i)
@@ -4463,16 +5160,19 @@ int main(int argc, char **argv) {
   struct ilist *l, *the_list, *ll;
   the_list = NULL;
   for (i=1; i&lt;argc; i++) {
-	sscanf(argv[i],"%d", &a);
-	l = malloc(sizeof(struct ilist));
-	l->i = a;
-	// insert the new element into the list while keeping it sorted
-	SGLIB_SORTED_LIST_ADD(struct ilist, the_list, l, ILIST_COMPARATOR, next_ptr);
+    sscanf(argv[i],"%d", &a);
+    l = malloc(sizeof(struct ilist));
+    l->i = a;
+    // insert the new element into the list while keeping it sorted
+    SGLIB_SORTED_LIST_ADD(struct ilist, the_list, l, ILIST_COMPARATOR, next_ptr);
   }
   SGLIB_LIST_MAP_ON_ELEMENTS(struct ilist, the_list, ll, next_ptr, {
-	printf("%d ", ll->i);
+    printf("%d ", ll->i);
   });
   printf("\n");
+  SGLIB_LIST_MAP_ON_ELEMENTS(struct ilist, the_list, ll, next_ptr, {
+    free(ll);
+  });
   return(0);
 }
 <pre>
@@ -4497,30 +5197,36 @@ int main(int argc, char **argv) {
 #include "sglib.h"
 
 typedef struct ilist {
-	int i;
-	struct ilist *next_ptr;
+    int i;
+    struct ilist *next_ptr;
 } iListType;
 
 #define ILIST_COMPARATOR(e1, e2) (e1->i - e2->i)
 
+SGLIB_DEFINE_SORTED_LIST_PROTOTYPES(iListType, ILIST_COMPARATOR, next_ptr)
 SGLIB_DEFINE_SORTED_LIST_FUNCTIONS(iListType, ILIST_COMPARATOR, next_ptr)
 
 int main(int argc, char **argv) {
-  int i,a;
-  struct ilist *l, *the_list;
+  int                               i,a;
+  struct ilist                      *l, *the_list;
+  struct sglib_iListType_iterator   it;
   the_list = NULL;
   for (i=1; i&lt;argc; i++) {
-	sscanf(argv[i],"%d", &a);
-	l = malloc(sizeof(struct ilist));
-	l->i = a;
-	// insert the new element into the list while keeping it sorted
-	sglib_iListType_add(&the_list, l);
+    sscanf(argv[i],"%d", &a);
+    l = malloc(sizeof(struct ilist));
+    l->i = a;
+    // insert the new element into the list while keeping it sorted
+    sglib_iListType_add(&the_list, l);
   }
   // print the list
   for (l=the_list; l!=NULL; l=l->next_ptr) {
-	printf("%d ", l->i);
+    printf("%d ", l->i);
   }
   printf("\n");
+  // free all
+  for(l=sglib_iListType_it_init(&it,the_list); l!=NULL; l=sglib_iListType_it_next(&it)) {
+    free(l);  
+  }
   return(0);
 }
 <pre>
@@ -4556,24 +5262,27 @@ int main(int argc, char **argv) {
 #include "sglib.h"
 
 typedef struct dllist {
-	int i;
-	struct dllist *ptr_to_next;
-	struct dllist *ptr_to_previous;
+    int i;
+    struct dllist *ptr_to_next;
+    struct dllist *ptr_to_previous;
 } dllist;
 
 #define DLLIST_COMPARATOR(e1, e2) (e1->i - e2->i)
 
+SGLIB_DEFINE_DL_LIST_PROTOTYPES(dllist, DLLIST_COMPARATOR, ptr_to_previous, ptr_to_next);
 SGLIB_DEFINE_DL_LIST_FUNCTIONS(dllist, DLLIST_COMPARATOR, ptr_to_previous, ptr_to_next);
 
 int main(int argc, char **argv) {
-  int 		i,a;
-  dllist 	*l, *the_list;
+  int                           i,a;
+  dllist                        *l, *the_list;
+  struct sglib_dllist_iterator  it;
+
   the_list = NULL;
   for (i=1; i&lt;argc; i++) {
-	sscanf(argv[i],"%d", &a);
-	l = malloc(sizeof(dllist));
-	l->i = a;
-	sglib_dllist_add(&the_list, l);
+    sscanf(argv[i],"%d", &a);
+    l = malloc(sizeof(dllist));
+    l->i = a;
+    sglib_dllist_add(&the_list, l);
   }
   // sort the list
   sglib_dllist_sort(&the_list);
@@ -4583,6 +5292,10 @@ int main(int argc, char **argv) {
   // print the list in reversed direction
   for(l=sglib_dllist_get_last(the_list); l!=NULL; l=l->ptr_to_previous) printf("%d ", l->i);
   printf("\n");
+  // free the list
+  for(l=sglib_dllist_it_init(&it,the_list); l!=NULL; l=sglib_dllist_it_next(&it)) {
+    free(l);
+  }
   return(0);
 }
 <pre>
@@ -4590,6 +5303,87 @@ int main(int argc, char **argv) {
 </table>
 
 </center>
+
+
+
+
+
+<a name="hashed_container_exam"></a>
+
+<br><br>
+<h2>Hashed Container Sample</h2>
+
+<center>
+
+<table width=90% border=1 CELLPADDING="10" CELLSPACING="1">
+<tr><td>
+<pre>
+// This program uses hash table containing lists
+// to remove multiple occurences of its parameters
+// For example:
+//   a.out 1 3 1 5 2 3 1 7 11 33 11
+// writes:
+//   11 1 2 33 3 5 7
+
+#include &lt;stdio.h>
+#include &lt;stdlib.h>
+#include &lt;malloc.h>
+#include "sglib.h"
+
+#define HASH_TAB_SIZE  10
+
+typedef struct ilist {
+  int i;
+  struct ilist *next;
+} ilist;
+
+ilist *htab[HASH_TAB_SIZE];
+
+#define ILIST_COMPARATOR(e1, e2)    (e1->i - e2->i)
+
+unsigned int ilist_hash_function(ilist *e) {
+  return(e->i);
+}
+
+SGLIB_DEFINE_LIST_PROTOTYPES(ilist, ILIST_COMPARATOR, next)
+SGLIB_DEFINE_LIST_FUNCTIONS(ilist, ILIST_COMPARATOR, next)
+SGLIB_DEFINE_HASHED_CONTAINER_PROTOTYPES(ilist, HASH_TAB_SIZE, ilist_hash_function)
+SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS(ilist, HASH_TAB_SIZE, ilist_hash_function)
+
+int main(int argc, char **argv) {
+  int                                   i, ai,aj, n;
+  struct ilist                          ii, *nn, *ll;
+  struct sglib_hashed_ilist_iterator    it;
+
+  sglib_hashed_ilist_init(htab);
+
+  for (i=1; i&lt;argc; i++) {
+    sscanf(argv[i],"%d", &n);
+    ii.i = n;
+    if (sglib_hashed_ilist_find_member(htab, &ii) == NULL) {
+      nn = malloc(sizeof(struct ilist));
+      nn->i = n;
+      sglib_hashed_ilist_add(htab, nn);
+    }
+  }
+
+  for(ll=sglib_hashed_ilist_it_init(&it,htab); ll!=NULL; ll=sglib_hashed_ilist_it_next(&it)) {
+      printf("%d ", ll->i);
+  }
+  printf("\n");
+
+  for(ll=sglib_hashed_ilist_it_init(&it,htab); ll!=NULL; ll=sglib_hashed_ilist_it_next(&it)) {
+      free(ll);
+  }
+  return(0);
+}
+<pre>
+</td></tr>
+</table>
+
+</center>
+
+
 
 
 
@@ -4627,25 +5421,34 @@ typedef struct rbtree {
 
 #define CMPARATOR(x,y) ((x->n)-(y->n))
 
-SGLIB_DEFINE_RBTREE_FUNCTIONS(rbtree, left, right, color_field, CMPARATOR, 0, 1);
+SGLIB_DEFINE_RBTREE_PROTOTYPES(rbtree, left, right, color_field, CMPARATOR);
+SGLIB_DEFINE_RBTREE_FUNCTIONS(rbtree, left, right, color_field, CMPARATOR);
 
 int main(int argc, char **argv) {
-  int i,a;
-  struct rbtree e, *t, *the_tree, *te;
+  int                           i,a;
+  struct rbtree                 e, *t, *the_tree, *te;
+  struct sglib_rbtree_iterator  it;
+
   the_tree = NULL;
   for (i=1; i&lt;argc; i++) {
-	sscanf(argv[i],"%d", &a);
-	e.n = a;
-	if (sglib_rbtree_find_member(the_tree, &e)==NULL) {
-	  t = malloc(sizeof(struct rbtree));
-	  t->n = a;
-	  sglib_rbtree_add(&the_tree, t);
-	}
+    sscanf(argv[i],"%d", &a);
+    e.n = a;
+    if (sglib_rbtree_find_member(the_tree, &e)==NULL) {
+      t = malloc(sizeof(struct rbtree));
+      t->n = a;
+      sglib_rbtree_add(&the_tree, t);
+    }
   }
-  SGLIB_BIN_TREE_MAP_ON_ELEMENTS(struct rbtree, the_tree, te, left, right, {
-	printf("%d ", te->n);
-  });
+
+  for(te=sglib_rbtree_it_init(&it,the_tree); te!=NULL; te=sglib_rbtree_it_next(&it)) {
+    printf("%d ", te->n);
+  }
   printf("\n");
+
+  for(te=sglib_rbtree_it_init(&it,the_tree); te!=NULL; te=sglib_rbtree_it_next(&it)) {
+    free(te);
+  }
+
   return(0);
 }
 <pre>

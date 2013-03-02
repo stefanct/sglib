@@ -18,16 +18,16 @@ int main(int argc, char **argv) {
   int a[MAX_ELEMS];
   size = argc-1;
   for (i=0; i<size; i++) {
-	sscanf(argv[i+1],"%d", &a[i]);
+    sscanf(argv[i+1],"%d", &a[i]);
   }
   for(i=1; i<size; i++) {
-	tmp = a[i];
-	SGLIB_ARRAY_BINARY_SEARCH(int, a, 0, i, tmp, SGLIB_NUMERIC_COMPARATOR, found, index);
-	memmove(a+index+1, a+index, (i-index)*sizeof(int));
-	a[index]=tmp;
+    tmp = a[i];
+    SGLIB_ARRAY_BINARY_SEARCH(int, a, 0, i, tmp, SGLIB_NUMERIC_COMPARATOR, found, index);
+    memmove(a+index+1, a+index, (i-index)*sizeof(int));
+    a[index]=tmp;
   }
   for (i=0; i<size; i++) {
-	printf("%d ", a[i]);
+    printf("%d ", a[i]);
   }
   printf("\n");
   return(0);

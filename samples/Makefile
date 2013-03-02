@@ -1,5 +1,6 @@
 runall: arraysort arraysort1 arraybinsearch listsort \
         listinsertsort listinsertsort1 rbtree dllist \
+        hash \
         selftest clean
 
 
@@ -23,6 +24,10 @@ dllist: dllist.c ../sglib.h
 	gcc -I.. dllist.c
 	a.out 6 7 3 4 1 4 1 3 5
 
+hash: hash.c ../sglib.h
+	gcc -I.. hash.c
+	a.out  1 3 1 5 2 3 1 7 11 33 11
+
 listinsertsort: listinsertsort.c ../sglib.h
 	gcc -I.. listinsertsort.c
 	a.out 6 7 3 4 1 4 1 3 5
@@ -35,13 +40,12 @@ rbtree: rbtree.c ../sglib.h
 	gcc -I.. rbtree.c
 	a.out 6 7 3 4 1 4 1 3 5
 
-clean:;
-	rm -f a.out
-
-
-
-
 
 selftest: selftest.c ../sglib.h
 	gcc -I.. -O selftest.c
 	a.out
+	echo Done.
+
+clean:;
+	rm -f a.out
+

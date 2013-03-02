@@ -19,11 +19,11 @@ int main(int argc, char **argv) {
   int a[MAX_ELEMS];
   size = argc-1;
   for (i=0; i<size; i++) {
-	sscanf(argv[i+1],"%d", &a[i]);
+    sscanf(argv[i+1],"%d", &a[i]);
   }
   sglib_int_array_heap_sort(a, size);
   for (i=0; i<size; i++) {
-	printf("%d ", a[i]);
+    printf("%d ", a[i]);
   }
   printf("\n");
   return(0);

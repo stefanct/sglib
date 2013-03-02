@@ -21,24 +21,33 @@ typedef struct rbtree {
 
 #define CMPARATOR(x,y) ((x->n)-(y->n))
 
-SGLIB_DEFINE_RBTREE_FUNCTIONS(rbtree, left, right, color_field, CMPARATOR, 0, 1);
+SGLIB_DEFINE_RBTREE_PROTOTYPES(rbtree, left, right, color_field, CMPARATOR);
+SGLIB_DEFINE_RBTREE_FUNCTIONS(rbtree, left, right, color_field, CMPARATOR);
 
 int main(int argc, char **argv) {
-  int i,a;
-  struct rbtree e, *t, *the_tree, *te;
+  int                           i,a;
+  struct rbtree                 e, *t, *the_tree, *te;
+  struct sglib_rbtree_iterator  it;
+
   the_tree = NULL;
   for (i=1; i<argc; i++) {
-	sscanf(argv[i],"%d", &a);
-	e.n = a;
-	if (sglib_rbtree_find_member(the_tree, &e)==NULL) {
-	  t = malloc(sizeof(struct rbtree));
-	  t->n = a;
-	  sglib_rbtree_add(&the_tree, t);
-	}
+    sscanf(argv[i],"%d", &a);
+    e.n = a;
+    if (sglib_rbtree_find_member(the_tree, &e)==NULL) {
+      t = malloc(sizeof(struct rbtree));
+      t->n = a;
+      sglib_rbtree_add(&the_tree, t);
+    }
   }
-  SGLIB_BIN_TREE_MAP_ON_ELEMENTS(struct rbtree, the_tree, te, left, right, {
-	printf("%d ", te->n);
-  });
+
+  for(te=sglib_rbtree_it_init(&it,the_tree); te!=NULL; te=sglib_rbtree_it_next(&it)) {
+    printf("%d ", te->n);
+  }
   printf("\n");
+
+  for(te=sglib_rbtree_it_init(&it,the_tree); te!=NULL; te=sglib_rbtree_it_next(&it)) {
+    free(te);
+  }
+
   return(0);
 }

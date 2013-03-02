@@ -1,7 +1,7 @@
 // This program uses hash table containing lists
 // to remove multiple occurences of its parameters
 // For example:
-//   a.out 1 3 5 2 3 1 7 11 33
+//   a.out 1 3 1 5 2 3 1 7 11 33 11
 // writes:
 //   11 1 2 33 3 5 7
 
@@ -25,12 +25,15 @@ unsigned int ilist_hash_function(ilist *e) {
   return(e->i);
 }
 
+SGLIB_DEFINE_LIST_PROTOTYPES(ilist, ILIST_COMPARATOR, next)
 SGLIB_DEFINE_LIST_FUNCTIONS(ilist, ILIST_COMPARATOR, next)
+SGLIB_DEFINE_HASHED_CONTAINER_PROTOTYPES(ilist, HASH_TAB_SIZE, ilist_hash_function)
 SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS(ilist, HASH_TAB_SIZE, ilist_hash_function)
 
 int main(int argc, char **argv) {
-  int           i, ai,aj, n;
-  struct ilist  ii, *nn,*ll;
+  int                                   i, ai,aj, n;
+  struct ilist                          ii, *nn, *ll;
+  struct sglib_hashed_ilist_iterator    it;
 
   sglib_hashed_ilist_init(htab);
 
@@ -44,13 +47,13 @@ int main(int argc, char **argv) {
     }
   }
 
-  // In the future, this will done better with iterators
-  for(i=0; i<HASH_TAB_SIZE; i++) {
-    SGLIB_LIST_MAP_ON_ELEMENTS(ilist, htab[i], ll, next, {
+  for(ll=sglib_hashed_ilist_it_init(&it,htab); ll!=NULL; ll=sglib_hashed_ilist_it_next(&it)) {
       printf("%d ", ll->i);
-    });
   }
   printf("\n");
 
+  for(ll=sglib_hashed_ilist_it_init(&it,htab); ll!=NULL; ll=sglib_hashed_ilist_it_next(&it)) {
+      free(ll);
+  }
   return(0);
 }

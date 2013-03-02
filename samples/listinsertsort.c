@@ -12,8 +12,8 @@
 #include "sglib.h"
 
 struct ilist {
-	int i;
-	struct ilist *next_ptr;
+    int i;
+    struct ilist *next_ptr;
 };
 
 #define ILIST_COMPARATOR(e1, e2) (e1->i - e2->i)
@@ -23,15 +23,18 @@ int main(int argc, char **argv) {
   struct ilist *l, *the_list, *ll;
   the_list = NULL;
   for (i=1; i<argc; i++) {
-	sscanf(argv[i],"%d", &a);
-	l = malloc(sizeof(struct ilist));
-	l->i = a;
-	// insert the new element into the list while keeping it sorted
-	SGLIB_SORTED_LIST_ADD(struct ilist, the_list, l, ILIST_COMPARATOR, next_ptr);
+    sscanf(argv[i],"%d", &a);
+    l = malloc(sizeof(struct ilist));
+    l->i = a;
+    // insert the new element into the list while keeping it sorted
+    SGLIB_SORTED_LIST_ADD(struct ilist, the_list, l, ILIST_COMPARATOR, next_ptr);
   }
   SGLIB_LIST_MAP_ON_ELEMENTS(struct ilist, the_list, ll, next_ptr, {
-	printf("%d ", ll->i);
+    printf("%d ", ll->i);
   });
   printf("\n");
+  SGLIB_LIST_MAP_ON_ELEMENTS(struct ilist, the_list, ll, next_ptr, {
+    free(ll);
+  });
   return(0);
 }

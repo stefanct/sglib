@@ -14,24 +14,27 @@
 #include "sglib.h"
 
 typedef struct dllist {
-	int i;
-	struct dllist *ptr_to_next;
-	struct dllist *ptr_to_previous;
+    int i;
+    struct dllist *ptr_to_next;
+    struct dllist *ptr_to_previous;
 } dllist;
 
 #define DLLIST_COMPARATOR(e1, e2) (e1->i - e2->i)
 
+SGLIB_DEFINE_DL_LIST_PROTOTYPES(dllist, DLLIST_COMPARATOR, ptr_to_previous, ptr_to_next);
 SGLIB_DEFINE_DL_LIST_FUNCTIONS(dllist, DLLIST_COMPARATOR, ptr_to_previous, ptr_to_next);
 
 int main(int argc, char **argv) {
-  int 		i,a;
-  dllist 	*l, *the_list;
+  int                           i,a;
+  dllist                        *l, *the_list;
+  struct sglib_dllist_iterator  it;
+
   the_list = NULL;
   for (i=1; i<argc; i++) {
-	sscanf(argv[i],"%d", &a);
-	l = malloc(sizeof(dllist));
-	l->i = a;
-	sglib_dllist_add(&the_list, l);
+    sscanf(argv[i],"%d", &a);
+    l = malloc(sizeof(dllist));
+    l->i = a;
+    sglib_dllist_add(&the_list, l);
   }
   // sort the list
   sglib_dllist_sort(&the_list);
@@ -41,5 +44,9 @@ int main(int argc, char **argv) {
   // print the list in reversed direction
   for(l=sglib_dllist_get_last(the_list); l!=NULL; l=l->ptr_to_previous) printf("%d ", l->i);
   printf("\n");
+  // free the list
+  for(l=sglib_dllist_it_init(&it,the_list); l!=NULL; l=sglib_dllist_it_next(&it)) {
+    free(l);
+  }
   return(0);
 }

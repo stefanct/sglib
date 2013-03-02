@@ -31,7 +31,7 @@
 <li><a href="#api1">Application Interface - level 1</a>
 <ul>
 <li><a href="#array_api1">Arrays</a>
-<li><a href="#hashed_container_api1">Hashed Container</a>
+<li><a href="#hashed_container_api1">Hashed Containers</a>
 <li><a href="#list_api1">Linked Lists</a>
 <li><a href="#sorted_list_api1">Sorted Linked Lists</a>
 <li><a href="#dl_list_api1">Double Linked Lists</a>
@@ -40,7 +40,7 @@
 <li><a href="#examples">Examples</a>
 <ul>
 <li><a href="#array_exam">Arrays</a>
-<li><a href="#hashed_container_exam">Hashed Container</a>
+<li><a href="#hashed_container_exam">Hashed Containers</a>
 <li><a href="#list_exam">Linked Lists</a>
 <li><a href="#sorted_list_exam">Sorted Linked Lists</a>
 <li><a href="#dl_list_exam">Double Linked Lists</a>
@@ -140,6 +140,38 @@ is a comparator for integers numbers. By the way, the macro
 <code>SGLIB_NUMERIC_COMPARATOR</code> with this definition 
 is predefined in sglib
 and you can use it withount need of your own redefinitions.
+
+
+<a name=subcomparator></a>
+
+<h3>Subcomparator</h3>
+
+
+A <a href="#comparator">comparator</a> which is induced from 
+another comparator in a way that it
+makes several elements equal while otherwise preserving the original
+ordering is called a <em>subcomparator</em>. More formally, if <code>cmp</code>
+is a comparator and <code>subcmp</code> is its subcomparator, then:
+<br>
+<br>
+ &nbsp; <code>cmp(x,y) &lt; 0</code> implies <code>subcmp(x,y) &lt;= 0</code>
+<br>
+and
+<br>
+ &nbsp; <code>cmp(x,y) > 0</code> implies <code>subcmp(x,y) >= 0</code>
+<br>
+<br>
+Subcomparators are used in iterators to iterate over such part 
+of a container which is equal to a given element. For example, let's take that we have a red black tree
+of strings ordered lexicographically.
+We can define a subcomparator comparing only the first letter
+of strings:
+<pre>
+#define strsubcmp(x, y) (x[0] - y[0])
+</pre>
+Using this subcomparator we can iterate over all strings 
+starting with the same letter.
+
 
 
 
@@ -1840,8 +1872,9 @@ require a uniform interface for operations applied on the base container.
 <code><b>SGLIB_DEFINE_HASHED_CONTAINER_PROTOTYPES(type, dim, hash_function)</b></code>
 <br>
 <br>
-define headers of hashed container functions. 
-Declared functions are:
+define headers of hashed container functions and iterator.
+It defines structure <em>sglib_hashed_<font  face="Arial" color="909090">type</font>_iterator</em>
+and declares functions:
 <br>
 <a href="#sglib_hashed_type_init">sglib_hashed_<font  face="Arial" color="909090">type</font>_init</a> 
 <br>
@@ -1856,6 +1889,12 @@ Declared functions are:
 <a href="#sglib_hashed_type_is_member">sglib_hashed_<font  face="Arial" color="909090">type</font>_is_member</a> 
 <br>
 <a href="#sglib_hashed_type_find_member">sglib_hashed_<font  face="Arial" color="909090">type</font>_find_member</a> 
+<br>
+<a href="#sglib_hashed_type_it_init">sglib_hashed_<font  face="Arial" color="909090">type</font>_it_init</a> 
+<br>
+<a href="#sglib_hashed_type_it_init_on_equal">sglib_hashed_<font  face="Arial" color="909090">type</font>_it_init_on_equal</a> 
+<br>
+<a href="#sglib_hashed_type_it_next">sglib_hashed_<font  face="Arial" color="909090">type</font>_it_next</a> 
 <dd><dl>
 <dt><b>Parameters:</b>
 #SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
@@ -1893,6 +1932,12 @@ Defined functions are:
 <a href="#sglib_hashed_type_"is_member>sglib_hashed_<font  face="Arial" color="909090">type</font>_is_member</a> 
 <br>
 <a href="#sglib_hashed_type_find_member">sglib_hashed_<font  face="Arial" color="909090">type</font>_find_member</a> 
+<br>
+<a href="#sglib_hashed_type_it_init">sglib_hashed_<font  face="Arial" color="909090">type</font>_it_init</a> 
+<br>
+<a href="#sglib_hashed_type_it_init_on_equal">sglib_hashed_<font  face="Arial" color="909090">type</font>_it_init_on_equal</a> 
+<br>
+<a href="#sglib_hashed_type_it_next">sglib_hashed_<font  face="Arial" color="909090">type</font>_it_next</a> 
 <dd><dl>
 <dt><b>Parameters:</b>
 #SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
@@ -1947,7 +1992,7 @@ echo "${sglib_define_hashed_container_functions_parameters}"
 </td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="sglib_hashed_type_add"></a>
-<code><b>void sglib_hashed_<font  face="Arial" color="909090">type</font>_add(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem</b>)</code>
+<code><b>void sglib_hashed_<font  face="Arial" color="909090">type</font>_add(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem)</b></code>
 <br>
 <br>
 Add an element into the hashed container.
@@ -2013,7 +2058,7 @@ echo "${sglib_define_hashed_container_functions_parameters}"
 </td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="sglib_hashed_type_delete"></a>
-<code><b>void sglib_hashed_<font  face="Arial" color="909090">type</font>_delete(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem</b>)</code>
+<code><b>void sglib_hashed_<font  face="Arial" color="909090">type</font>_delete(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem)</b></code>
 <br>
 <br>
 delete an element from a hashed container. The element must be a <a href="#pointer_equality">pointer equal</a> member of the hashed container.
@@ -2083,7 +2128,7 @@ echo "${sglib_define_hashed_container_functions_parameters}"
 </td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="sglib_hashed_type_is_member"></a>
-<code><b>int sglib_hashed_<font  face="Arial" color="909090">type</font>_is_member(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem</b>)</code>
+<code><b>int sglib_hashed_<font  face="Arial" color="909090">type</font>_is_member(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem)</b></code>
 <br>
 <br>
 determine whether an element is inside a hashed container. The element is searched using <a href="#comparator_equality">pointer equality</a>.
@@ -2116,7 +2161,7 @@ echo "${sglib_define_hashed_container_functions_parameters}"
 </td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="sglib_hashed_type_find_member"></a>
-<code><b><font  face="Arial" color="909090">type</font> *sglib_hashed_<font  face="Arial" color="909090">type</font>_find_member(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem</b>)</code>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_hashed_<font  face="Arial" color="909090">type</font>_find_member(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem)</b></code>
 <br>
 <br>
 find an element in the hashed container. The element is searched using <a href="#comparator_equality">comparator equality</a>.
@@ -2129,6 +2174,123 @@ echo "${sglib_hashed_container_table_parameter}"
 </dt>
 <dt><b>Returns:</b>
 <dd>The member of the container <a href="#comparator_equality">comparator equal</a> to <code>elem</code>.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS"><b>SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_hashed_container_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_hashed_<font face="Arial" color="909090">type</font>_it_init</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_hashed_type_it_init"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_hashed_<font  face="Arial" color="909090">type</font>_it_init(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>])</b></code>
+<br>
+<br>
+initialize an iterator <code>it</code> to run over elements of <code>table</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+sglib_hashed_container_iterator_parameter='
+<dd><code>it</code> - the iterator.
+'
+echo "${sglib_hashed_container_iterator_parameter}"
+echo "${sglib_hashed_container_table_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+<dd>The first iterated element or <code>NULL</code> if there is no element.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS"><b>SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_hashed_container_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_hashed_<font face="Arial" color="909090">type</font>_it_init_on_equal</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_hashed_type_it_init_on_equal"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_hashed_<font  face="Arial" color="909090">type</font>_it_init_on_equal(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], int (*subcomparator)(<font  face="Arial" color="909090">type</font> *, <font  face="Arial" color="909090">type</font> *), <font  face="Arial" color="909090">type</font> *equalto)</b></code>
+<br>
+<br>
+initialize an iterator <code>it</code> to run over those elements of <code>table</code> which are
+equal to <code>equalto</code>. The equality is considered with respect to the 
+<code>subcomparator</code> which must be a <a href="#subcomparator">subcomparator</a> 
+of the base container comparator.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_hashed_container_iterator_parameter}"
+echo "${sglib_hashed_container_table_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><code>subcomparator</code> - the comparator used to find equal elements.
+<dd><code>equalto</code> - the element used as filter.
+</dt>
+<dt><b>Returns:</b>
+<dd>The first iterated element or <code>NULL</code> if there is no element equal to <code>equalto</code>.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS"><b>SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_hashed_container_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_hashed_<font face="Arial" color="909090">type</font>_it_next</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_hashed_type_it_next"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_hashed_<font  face="Arial" color="909090">type</font>_it_next(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it)</b></code>
+<br>
+<br>
+get the next element from the iterator <code>it</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_hashed_container_iterator_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+<dd>The next iterated element or <code>NULL</code> if there is no next element.
 </dt>
 <hr size=1 width=70%>
 <font  face="Arial" size=-1 color="909090">
@@ -2197,6 +2359,9 @@ sglib_define_list_prototype_functions='
 <br><a href="#sglib_list_type_len">sglib_<font  face="Arial" color="909090">type</font>_len</a>
 <br><a href="#sglib_list_type_sort">sglib_<font  face="Arial" color="909090">type</font>_sort</a>
 <br><a href="#sglib_list_type_reverse">sglib_<font  face="Arial" color="909090">type</font>_reverse</a>
+<br><a href="#sglib_list_type_it_init">sglib_<font  face="Arial" color="909090">type</font>_it_init</a> 
+<br><a href="#sglib_list_type_it_init_on_equal">sglib_<font  face="Arial" color="909090">type</font>_it_init_on_equal</a> 
+<br><a href="#sglib_list_type_it_next">sglib_<font  face="Arial" color="909090">type</font>_it_next</a> 
 '
 echo "${sglib_define_list_prototype_functions}"
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
@@ -2551,6 +2716,170 @@ echo "${sglib_define_list_functions_parameters}"
 </td></tr>
 
 
+
+
+
+
+
+
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+#some definitions common for list iterators
+sglib_list_iterator_parameter='
+<dd><code>it</code> - the iterator.
+'
+sglib_list_iterator_init_description='
+initialize an iterator <code>it</code> to run over elements of <code>list</code>.
+'
+sglib_list_iterator_init_result_description='
+<dd>The first iterated element or <code>NULL</code> if there is no element.
+'
+sglib_list_iterator_init_eq_description='
+initialize an iterator <code>it</code> to run over those elements of <code>list</code> which are
+equal to <code>equalto</code>. The equality is considered with respect to the 
+<code>subcomparator</code> which must be a <a href="#subcomparator">subcomparator</a> 
+of the <font  face="Arial" size=-1 color="909090">comparator</font>.
+'
+sglib_list_iterator_init_eq_pars_description='
+<dd><code>subcomparator</code> - the comparator used to find equal elements.
+<dd><code>equalto</code> - the element used as filter.
+'
+sglib_list_iterator_init_eq_result_description='
+<dd>The first iterated element or <code>NULL</code> if there is no element equal to <code>equalto</code>.
+'
+sglib_list_iterator_next_description='
+get the next element from the iterator <code>it</code>.
+'
+sglib_list_iterator_next_result_description='
+<dd>The next iterated element or <code>NULL</code> if there is no next element.
+'
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_list_type_it_init"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *list)</b></code>
+<br>
+<br>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_init_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_parameter}"
+echo "${sglib_list_functions_list_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "$sglib_list_iterator_init_result_description"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_LIST_FUNCTIONS"><b>SGLIB_DEFINE_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_list_type_it_init_on_equal"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init_on_equal(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *list, int (*subcomparator)(<font  face="Arial" color="909090">type</font> *, <font  face="Arial" color="909090">type</font> *), <font  face="Arial" color="909090">type</font> *equalto)</b></code>
+<br>
+<br>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_init_eq_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_parameter}"
+echo "${sglib_list_functions_list_parameter}"
+echo "${sglib_list_iterator_init_eq_pars_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_init_eq_result_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_LIST_FUNCTIONS"><b>SGLIB_DEFINE_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_next</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_list_type_it_next"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_next(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it)</b></code>
+<br>
+<br>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_next_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_next_result_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_LIST_FUNCTIONS"><b>SGLIB_DEFINE_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
 </table>
 
 </td></tr>
@@ -2615,6 +2944,9 @@ sglib_define_sorted_list_prototype_functions='
 <br><a href="#sglib_sorted_list_type_is_member">sglib_<font  face="Arial" color="909090">type</font>_is_member</a>
 <br><a href="#sglib_sorted_list_type_len">sglib_<font  face="Arial" color="909090">type</font>_len</a>
 <br><a href="#sglib_sorted_list_type_sort">sglib_<font  face="Arial" color="909090">type</font>_sort</a>
+<br><a href="#sglib_sorted_list_type_it_init">sglib_<font  face="Arial" color="909090">type</font>_it_init</a> 
+<br><a href="#sglib_sorted_list_type_it_init_on_equal">sglib_<font  face="Arial" color="909090">type</font>_it_init_on_equal</a> 
+<br><a href="#sglib_sorted_list_type_it_next">sglib_<font  face="Arial" color="909090">type</font>_it_next</a> 
 '
 echo "${sglib_define_sorted_list_prototype_functions}"
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
@@ -2915,6 +3247,134 @@ echo "${sglib_define_sorted_list_functions_parameters}"
 </td></tr>
 
 
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_sorted_list_type_it_init"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *list)</b></code>
+<br>
+<br>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_init_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_parameter}"
+echo "${sglib_list_functions_list_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "$sglib_list_iterator_init_result_description"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_SORTED_LIST_FUNCTIONS"><b>SGLIB_DEFINE_SORTED_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_sorted_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_sorted_list_type_it_init_on_equal"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init_on_equal(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *list, int (*subcomparator)(<font  face="Arial" color="909090">type</font> *, <font  face="Arial" color="909090">type</font> *), <font  face="Arial" color="909090">type</font> *equalto)</b></code>
+<br>
+<br>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_init_eq_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_parameter}"
+echo "${sglib_list_functions_list_parameter}"
+echo "${sglib_list_iterator_init_eq_pars_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_init_eq_result_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_SORTED_LIST_FUNCTIONS"><b>SGLIB_DEFINE_SORTED_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_sorted_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_next</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_sorted_list_type_it_next"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_next(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it)</b></code>
+<br>
+<br>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_next_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_next_result_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_SORTED_LIST_FUNCTIONS"><b>SGLIB_DEFINE_SORTED_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_sorted_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
 </table>
 
 </td></tr>
@@ -2983,6 +3443,9 @@ sglib_define_dl_list_prototype_functions='
 <br><a href="#sglib_dl_list_type_len">sglib_<font  face="Arial" color="909090">type</font>_len</a>
 <br><a href="#sglib_dl_list_type_sort">sglib_<font  face="Arial" color="909090">type</font>_sort</a>
 <br><a href="#sglib_dl_list_type_reverse">sglib_<font  face="Arial" color="909090">type</font>_reverse</a>
+<br><a href="#sglib_dl_list_type_it_init">sglib_<font  face="Arial" color="909090">type</font>_it_init</a> 
+<br><a href="#sglib_dl_list_type_it_init_on_equal">sglib_<font  face="Arial" color="909090">type</font>_it_init_on_equal</a> 
+<br><a href="#sglib_dl_list_type_it_next">sglib_<font  face="Arial" color="909090">type</font>_it_next</a> 
 '
 echo "${sglib_define_dl_list_prototype_functions}"
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
@@ -3521,6 +3984,136 @@ echo "${sglib_define_dl_list_functions_parameters}"
 </td></tr>
 
 
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_it_init"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *list)</b></code>
+<br>
+<br>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_init_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_parameter}"
+echo "${sglib_list_functions_list_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "$sglib_list_iterator_init_result_description"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_it_init_on_equal"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init_on_equal(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *list, int (*subcomparator)(<font  face="Arial" color="909090">type</font> *, <font  face="Arial" color="909090">type</font> *), <font  face="Arial" color="909090">type</font> *equalto)</b></code>
+<br>
+<br>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_init_eq_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_parameter}"
+echo "${sglib_list_functions_list_parameter}"
+echo "${sglib_list_iterator_init_eq_pars_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_init_eq_result_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_next</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_it_next"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_next(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it)</b></code>
+<br>
+<br>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_next_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_list_iterator_next_result_description}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
 </table>
 
 </td></tr>
@@ -3581,7 +4174,7 @@ echo "${sglib_define_dl_list_functions_parameters}"
 <code><b>SGLIB_DEFINE_RBTREE_PROTOTYPES</b></code>
 </td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
 </td><td VALIGN="top" WIDTH="70%">
-<code><b>SGLIB_DEFINE_RBTREE_PROTOTYPES(type, left, right, colorbit, comparator, RED, BLACK)</b></code>
+<code><b>SGLIB_DEFINE_RBTREE_PROTOTYPES(type, left, right, colorbit, comparator)</b></code>
 <br>
 <br>
 define headers for red black tree implementation.
@@ -3595,6 +4188,9 @@ sglib_define_rbtree_prototype_functions='
 <br><a href="#sglib_rbtree_type_find_member">sglib_<font  face="Arial" color="909090">type</font>_find_member</a>
 <br><a href="#sglib_rbtree_type_is_member">sglib_<font  face="Arial" color="909090">type</font>_is_member</a>
 <br><a href="#sglib_rbtree_type_len">sglib_<font  face="Arial" color="909090">type</font>_len</a>
+<br><a href="#sglib_rbtree_type_it_init">sglib_<font  face="Arial" color="909090">type</font>_it_init</a> 
+<br><a href="#sglib_rbtree_type_it_init_on_equal">sglib_<font  face="Arial" color="909090">type</font>_it_init_on_equal</a> 
+<br><a href="#sglib_rbtree_type_it_next">sglib_<font  face="Arial" color="909090">type</font>_it_next</a> 
 '
 echo "${sglib_define_rbtree_prototype_functions}"
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
@@ -3608,8 +4204,6 @@ sglib_define_rbtree_functions_parameters='
 <dd><code>right</code> - the name of  the field containing <a href="#left_right_element">right</a> subtree of a node.
 <dd><code>colorbit</code> - the name of the field containing the <a href="#rb_color">color</a> of a node.
 <dd><code>comparator</code> - a <a href="#comparator">comparator</a> used to compare elements.
-<dd><code>RED</code> - a constant for red color.
-<dd><code>BLACK</code> - a constant for black color.
 '
 echo "${sglib_define_rbtree_functions_parameters}"
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
@@ -3621,7 +4215,7 @@ echo "${sglib_define_rbtree_functions_parameters}"
 </td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="SGLIB_DEFINE_RBTREE_FUNCTIONS"></a>
-<code><b>SGLIB_DEFINE_RBTREE_FUNCTIONS(type, left, right, colorbit, comparator, RED, BLACK)</b></code>
+<code><b>SGLIB_DEFINE_RBTREE_FUNCTIONS(type, left, right, colorbit, comparator)</b></code>
 <br>
 <br>
 define functions for manipulating balanced red-black trees. 
@@ -3873,6 +4467,125 @@ echo "${sglib_define_rbtree_functions_parameters}"
 </td></tr>
 
 
+
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_rbtree_type_it_init"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *tree)</b></code>
+<br>
+<br>
+initialize an iterator <code>it</code> to run over elements of <code>tree</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+sglib_rbtree_container_iterator_parameter='
+<dd><code>it</code> - the iterator.
+'
+echo "${sglib_rbtree_container_iterator_parameter}"
+echo "${sglib_rbtree_functions_tree_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+<dd>The first iterated element or <code>NULL</code> if there is no element.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_RBTREE_FUNCTIONS"><b>SGLIB_DEFINE_RBTREE_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_rbtree_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_init_on_equal</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_rbtree_type_it_init_on_equal"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_init_on_equal(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it, <font  face="Arial" color="909090">type</font> *tree, int (*subcomparator)(<font  face="Arial" color="909090">type</font> *, <font  face="Arial" color="909090">type</font> *), <font  face="Arial" color="909090">type</font> *equalto)</b></code>
+<br>
+<br>
+initialize an iterator <code>it</code> to run over those elements of the <code>tree</code> which are
+equal to <code>equalto</code>. The equality is considered with respect to the 
+<code>subcomparator</code> which must be a <a href="#subcomparator">subcomparator</a> 
+of the <font  face="Arial" size=-1 color="909090">comparator</font>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_rbtree_container_iterator_parameter}"
+echo "${sglib_rbtree_functions_tree_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><code>subcomparator</code> - the comparator used to find equal elements.
+<dd><code>equalto</code> - the element used as filter.
+</dt>
+<dt><b>Returns:</b>
+<dd>The first iterated element or <code>NULL</code> if there is no element equal to <code>equalto</code>.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_RBTREE_FUNCTIONS"><b>SGLIB_DEFINE_RBTREE_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_rbtree_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font face="Arial" color="909090">type</font>_it_next</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_rbtree_type_it_next"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_it_next(struct sglib_<font  face="Arial" color="909090">type</font>_iterator *it)</b></code>
+<br>
+<br>
+get the next element from the iterator <code>it</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_rbtree_container_iterator_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+<dd>The next iterated element or <code>NULL</code> if there is no next element.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_RBTREE_FUNCTIONS"><b>SGLIB_DEFINE_RBTREE_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_rbtree_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
 </table>
 
 </td></tr>
@@ -3955,32 +4668,6 @@ sed -e "s/</\\\&lt;/g" ../samples/arraybinsearch.c
 
 #SPARSE_SHELL_SCRIPT_EXECUTE
 ######################################################################################################################
-################################              HASHED CONTAINER SAMPLES                ################################
-######################################################################################################################
-#SPARSE_SHELL_SCRIPT_EXECUTE_END
-
-
-<a name="hashed_container_exam"></a>
-
-<br><br>
-<h2>Hashed Container Sample</h2>
-
-<center>
-
-<table width=90% border=1 CELLPADDING="10" CELLSPACING="1">
-<tr><td>
-<pre>
-#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
-sed -e "s/</\\\&lt;/g" ../samples/hash.c
-#SPARSE_SHELL_SCRIPT_EXECUTE_END
-<pre>
-</td></tr>
-</table>
-
-</center>
-
-#SPARSE_SHELL_SCRIPT_EXECUTE
-######################################################################################################################
 ################################              ALL LISTS SAMPLES                #######################################
 ######################################################################################################################
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
@@ -4055,6 +4742,36 @@ sed -e "s/</\\\&lt;/g" ../samples/dllist.c
 </table>
 
 </center>
+
+
+
+#SPARSE_SHELL_SCRIPT_EXECUTE
+######################################################################################################################
+################################              HASHED CONTAINER SAMPLES                ################################
+######################################################################################################################
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+
+
+<a name="hashed_container_exam"></a>
+
+<br><br>
+<h2>Hashed Container Sample</h2>
+
+<center>
+
+<table width=90% border=1 CELLPADDING="10" CELLSPACING="1">
+<tr><td>
+<pre>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+sed -e "s/</\\\&lt;/g" ../samples/hash.c
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<pre>
+</td></tr>
+</table>
+
+</center>
+
+
 
 #SPARSE_SHELL_SCRIPT_EXECUTE
 ######################################################################################################################

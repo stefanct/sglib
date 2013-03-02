@@ -1,25 +1,29 @@
-// This is SGLIB version 0.0.3
-//
-// (C) by Marian Vittek, Bratislava, http://www.xref-tech.com/sglib, 2003,2004
-//
-// License Conditions: You can use this software 
-// freely for non-commercial purposes, 
-// or under terms of the Open Source Software License, 
-// or under terms of the GNU Public License.
-// If you wish to receive it under other license conditions
-// contact the author.
-//
+/* 
+
+  This is SGLIB version 1.0.1 
+
+  (C) by Marian Vittek, Bratislava, http://www.xref-tech.com/sglib, 2003,2004 
+
+  License Conditions: You can use this software:
+   - freely for non-commercial purposes,
+   - or under the terms of the Open Source Software License,
+   - or under the terms of the GNU Public License.
+  If you wish to receive it under other (commercial) license conditions,
+  contact the author. 
+
+*/
+
 
 #ifndef _SGLIB__h_
 #define _SGLIB__h_
 
-
+/* the assert is used exclusively to write unexpected error messages */
 #include <assert.h>
 
 
 /* ---------------------------------------------------------------------------- */
 /* ---------------------------------------------------------------------------- */
-/* -                           LEVEL - 0  IMPLEMENTATION                      - */
+/* -                            LEVEL - 0  INTERFACE                          - */
 /* ---------------------------------------------------------------------------- */
 /* ---------------------------------------------------------------------------- */
 
@@ -29,8 +33,10 @@
 /* ---------------------------------------------------------------------------- */
 
 /* 
-  here follows basic algorithms for sorting arrays, multiple relied arrays can
+
+  Basic algorithms  for sorting arrays. Multiple  depending arrays can
   be rearranged using user defined 'elem_exchangers'
+
 */
 
 /*               HEAP - SORT  (level 0)           */
@@ -177,6 +183,7 @@
 /*  i is the index of the first used element in the array                  */
 /*  j is the index of the first free element in the array                  */
 /*  dim is the size of the array a                                         */
+/* !!!!!!! This data structure is NOT documented, do not use it !!!!!!!!!! */
 
 #define SGLIB_QUEUE_INIT(type, a, i, j) { i = j = 0; }
 #define SGLIB_QUEUE_IS_EMPTY(type, a, i, j) ((i)==(j))
@@ -203,6 +210,7 @@
 /*  a is the array storing values                                             */
 /*  i is the index of the first free element in the array                     */
 /*  dim is the size of the array a                                            */
+/* !!!!!!! This data structure is NOT documented, do not use it !!!!!!!!!!    */
 
 #define SGLIB_HEAP_INIT(type, a, i) { i = 0; }
 #define SGLIB_HEAP_IS_EMPTY(type, a, i) ((i)==0)
@@ -218,6 +226,7 @@
   }\
 }
 #define SGLIB_HEAP_ADD(type, a, elem, i, dim, comparator) {\
+  if (SGLIB_HEAP_IS_FULL(type, a, i, dim)) assert(0 && "the heap is full");\
   a[i] = (elem);\
   SGLIB_HEAP_ADD_NEXT(type, a, i, dim, comparator, SGLIB_ARRAY_ELEMENTS_EXCHANGER);\
 }
@@ -232,65 +241,85 @@
 }
 
 
-/* ----------------------------------- hash table (draft) (level 0) -------------------- */
-/* 
-  In those hash tables there is a one-to-one mapping between 'objects' stored inside 
-  and indexes where they are placed. Each index is pointing to exactly one 'object' and 
-  each 'object' stored in the table occurs on exactly one index. 
-  Once an object is stored in the table, you can represent it via its index.
+/* ----------------- hashed table of pointers (in an array) -------------------- */
 
-  In case of collision when adding an object the
-  index shifted by SGLIB_HASH_TAB_SHIFT_CONSTANT. 
+/*
 
-  You can not delete an element from such hash table.
+  This hashed table is storing pointers to objects (not containers).
+  In this table there is a one-to-one mapping between 'objects' stored
+  in the table and indexes where they are placed. Each index is
+  pointing to exactly one 'object' and each 'object' stored in the
+  table occurs on exactly one index.  Once an object is stored in the
+  table, it can be represented via its index.
+
+  In case of collision while adding an object the index shifted 
+  by SGLIB_HASH_TAB_SHIFT_CONSTANT (constant can be redefined)
+
+  You can NOT delete an element from such hash table. The only
+  justification (I can see) for this data structure is an exchange
+  file format, having an index table at the beginning and then
+  refering objects via indexes.
+
+  !!!!!!! This data structure is NOT documented, do not use it !!!!!!!!!! 
 
 */
 
-#define SGLIB_HASH_TAB_INIT(type, table, table_size) {\
-    memset((table), 0, sizeof(type *) * (table_size));\
+#define SGLIB_HASH_TAB_INIT(type, table, dim) {\
+  int _i_;\
+  for(_i_ = 0; _i_ < (dim); _i_++) (table)[_i_] = NULL;\
 }
 
-#define SGLIB_HASH_TAB_FIND_MEMBER(type, table, elem, table_size, hashing_function, comparator, resultIndex, resultElem) {\
-    unsigned _posid_;\
-    int      _count_, _res_; \
-    _count = 0;\
-    _posid_ = hashing_function(elem);\
-    _posid_ %= (table_size);\
-    while ((_res_ = ((table)[_posid_] != NULL)) && comparator(((table)[_posid_]), (elem)) != 0 && _count_<(table_size)) {\
-        _count_ ++;\
-        _posid_ = (_posid_ + SGLIB_HASH_TAB_SHIFT_CONSTANT) % (table_size);\
-    }\
-    (resultIndex) = _posid_;\
-    (resultElem) = _res_;\
-}
-
-#define SGLIB_HASH_TAB_ADD_IF_NOT_MEMBER(type, table, elem, table_size, hashing_function, comparator, resultIndex, resultAdded) {\
-  int      _ismem_;\
+#define SGLIB_HASH_TAB_ADD_IF_NOT_MEMBER(type, table, dim, elem, hash_function, comparator, member){\
   unsigned _pos_;\
-  SGLIB_HASH_TAB_IS_MEMBER(type, table, table_size, hashing_function, elem, comparator, _pos_, _ismem_);\
-  (resultAdded) = ! _ismem_;\
-  (resultIndex) = _pos_;\
-  if (! _ismem_) {\
-    if ((table)[_pos_] != NULL) {\
-      /* table is full */\
-      (resultAdded) = 0;\
-      (resultIndex) = -1;\
-    } else {\
-      (table)[_pos_] = (elem);\
-    }\
+  type     *_elem_;\
+  SGLIB_HASH_TAB_FIND_MEMBER(type, table, dim, elem, _pos_, _elem_);\
+  (member) = (table)[_pos_];\
+  if (_elem_ == NULL) {\
+    if ((table)[_pos_] != NULL) assert(0 && "the hash table is full");\
+    (table)[_pos_] = (elem);\
   }\
 }
 
-#define SGLIB_HASH_TAB_MAP_ON_ELEMENTS(type, table, table_size, iteratedIndex, iteratedVariable, command) {\
-  /*unsigned  iteratedIndex;*/\
-  /*type      *iteratedVariable;*/\
-  for(iteratedIndex=0; iteratedIndex < (table_size); iteratedIndex++) {\
+#define SGLIB_HASH_TAB_FIND_MEMBER(type, table, dim, elem, hash_function, comparator, resultIndex, resultMember) {\
+  unsigned _i_;\
+  int      _count_;\
+  type     *_e_;\
+  _count = 0;\
+  _i_ = hash_function(elem);\
+  _i_ %= (dim);\
+  while ((_e_=(table)[_i_])!=NULL && comparator(_e_, (elem))!=0 && _count_<(dim)) {\
+    _count_ ++;\
+    _i_ = (_i_ + SGLIB_HASH_TAB_SHIFT_CONSTANT) % (dim);\
+  }\
+  (resultIndex) = _i_;\
+  if (_count_ < (dim)) (resultMember) = _e_;\
+  else (resultMember) = NULL;\
+}
+
+#define SGLIB_HASH_TAB_IS_MEMBER(type, table, dim, elem, hash_function, resultIndex) {\
+  unsigned _i_;\
+  int      _c_;\
+  type     *_e_;\
+  _count = 0;\
+  _i_ = hash_function(elem);\
+  _i_ %= (dim);\
+  while ((_e_=(table)[_i_])!=NULL && _e_!=(elem) && _c_<(dim)) {\
+    _c_ ++;\
+    _i_ = (_i_ + SGLIB_HASH_TAB_SHIFT_CONSTANT) % (dim);\
+  }\
+  if (_e_==(elem)) (resultIndex) = _i_;\
+  else (resultIndex) = -1;\
+}
+
+#define SGLIB_HASH_TAB_MAP_ON_ELEMENTS(type, table, dim, iteratedIndex, iteratedVariable, command) {\
+  unsigned  iteratedIndex;\
+  type      *iteratedVariable;\
+  for(iteratedIndex=0; iteratedIndex < (dim); iteratedIndex++) {\
     iteratedVariable = (table)[iteratedIndex];\
-    if (iteratedVariable != NULL) {\
-      command;\
-    }\
+    if (iteratedVariable != NULL) {command;}\
   }\
 }
+
 
 /* ---------------------------------------------------------------------------- */
 /* ------------------------- DYNAMIC DATA STRUCTURES -------------------------- */
@@ -316,7 +345,7 @@
 #define SGLIB_LIST_DELETE(type, list, elem, next) {\
   type **_p_;\
   for(_p_ = &(list); *_p_!=NULL && *_p_!=(elem); _p_= &(*_p_)->next) ;\
-  assert(*_p_!=NULL && "elem is not member of the list, use DELETE_IF_MEMBER"!=NULL);\
+  assert(*_p_!=NULL && "element is not member of the container, use DELETE_IF_MEMBER instead"!=NULL);\
   *_p_ = (*_p_)->next;\
 }
 
@@ -352,6 +381,7 @@
 
 #define SGLIB_LIST_MAP_ON_ELEMENTS(type, list, iteratedVariable, next, command) {\
   type *_ne_;\
+  type *iteratedVariable;\
   (iteratedVariable) = (list); \
   while ((iteratedVariable)!=NULL) {\
     _ne_ = (iteratedVariable)->next;\
@@ -378,7 +408,7 @@
 }
 
 #define SGLIB_LIST_SORT(type, list, comparator, next) {\
-  /* a merge sort on lists */\
+  /* a non-recursive merge sort on lists */\
   type *_r_;\
   type *_a_, *_b_, *_todo_, *_t_, **_restail_;\
   int _i_, _n_, _contFlag_;\
@@ -395,8 +425,9 @@
       }\
       _b_ = _t_->next; _t_->next=NULL;\
       for(_i_ =1, _t_ = _b_;  _i_<_n_ && _t_!=NULL;  _i_++, _t_ = _t_->next) ;\
-      if (_t_ ==NULL) _todo_ =NULL;\
-      else {\
+      if (_t_ ==NULL) {\
+        _todo_ =NULL;\
+      } else {\
         _todo_ = _t_->next; _t_->next=NULL;\
       }\
       /* merge */\
@@ -607,6 +638,7 @@
 
 #define SGLIB_DL_LIST_MAP_ON_ELEMENTS(type, list, iteratedVariable, previous, next, command) {\
   type *_dl_;\
+  type *iteratedVariable;\
   if ((list)!=NULL) {\
     _dl_ = (list)->next;\
     SGLIB_LIST_MAP_ON_ELEMENTS(type, list, iteratedVariable, previous, command);\
@@ -687,58 +719,82 @@
   }\
 }
 
-/* TODO: --------------------- sorted double linked list (level 0) --------------------- */
-
-
 
 /* ------------------------------- binary tree traversal (level 0) -------------------- */
-/* TODO: Do this with iterators */
 
-#define SGLIB_BIN_TREE_MAP_ON_ELEMENTS(type, tree, _current_element_, left, right, command) {\
-  type *_path_[SGLIB_MAX_TREE_DEEP];\
+
+#define SGLIB___BIN_TREE_MAP_ON_ELEMENTS(type, tree, iteratedVariable, order, left, right, command) {\
   /* this is non-recursive implementation of tree traversal */\
   /* it maintains the path to the current node in the array '_path_' */\
   /* the _path_[0] contains the root of the tree; */\
-  /* the _path_[_pathi_-1] contains the parent of _current_element_ */\
-  type *_upn_;\
+  /* the _path_[_pathi_] contains the _current_element_ */\
+  /* the macro does not use the _current_element_ after execution of command */\
+  /* command can destroy it, it can free the element for example */\
+  type *_path_[SGLIB_MAX_TREE_DEEP];\
+  type *_right_[SGLIB_MAX_TREE_DEEP];\
+  char _pass_[SGLIB_MAX_TREE_DEEP];\
+  type *_cn_;\
   int _pathi_;\
-  int _state_;  /* 0 - goto left; 1 - inspect && goto right; 2 - goto up */\
-  if (tree != NULL) {\
-    _current_element_ = tree;\
-    _pathi_ = 0;\
-    _path_[_pathi_++] = _current_element_;\
-    _state_ = 0;\
-    while (_pathi_>1 || _state_!=2) {\
-      assert(_pathi_<SGLIB_MAX_TREE_DEEP && "The tree is too deep"!=NULL);\
-      if (_state_==0 && _current_element_->left!=NULL) {\
-        _current_element_ = _current_element_->left;\
-        _path_[_pathi_++] = _current_element_;\
-      } else {\
-        if (_state_!=2) {command;}\
-        if (_state_!=2 && _current_element_->right!=NULL) {\
-          _current_element_ = _current_element_->right;\
-          _path_[_pathi_++] = _current_element_;\
-          _state_ = 0;\
-        } else {\
-          _pathi_ --;\
-          if (_pathi_ == 0) {\
-            _state_ = 2;\
-          } else {\
-            _upn_ = _path_[_pathi_-1];\
-            _state_ = 1 + (_current_element_ != _upn_->left);\
-            _current_element_ = _upn_;\
-          }\
-        }\
+  type *iteratedVariable;\
+  _cn_ = (tree);\
+  _pathi_ = 0;\
+  while (_cn_!=NULL) {\
+    /* push down to leftmost innermost element */\
+    while(_cn_!=NULL) {\
+      _path_[_pathi_] = _cn_;\
+      _right_[_pathi_] = _cn_->right;\
+      _pass_[_pathi_] = 0;\
+      _cn_ = _cn_->left;\
+      if (order == 0) {\
+        iteratedVariable = _path_[_pathi_];\
+        {command;}\
       }\
+      _pathi_ ++;\
+      if (_pathi_ >= SGLIB_MAX_TREE_DEEP) assert(0 && "the binary_tree is too deep");\
     }\
+    do {\
+      _pathi_ --;\
+      if ((order==1 && _pass_[_pathi_] == 0)\
+          || (order == 2 && (_pass_[_pathi_] == 1 || _right_[_pathi_]==NULL))) {\
+        iteratedVariable = _path_[_pathi_];\
+        {command;}\
+      }\
+      _pass_[_pathi_] ++;\
+    } while (_pathi_>0 && _right_[_pathi_]==NULL) ;\
+    _cn_ = _right_[_pathi_];\
+    _right_[_pathi_] = NULL;\
+    _pathi_ ++;\
   }\
 }
 
+#define SGLIB_BIN_TREE_MAP_ON_ELEMENTS(type, tree, _current_element_, left, right, command) {\
+  SGLIB___BIN_TREE_MAP_ON_ELEMENTS(type, tree, _current_element_, 1, left, right, command);\
+}
 
+#define SGLIB_BIN_TREE_MAP_ON_ELEMENTS_PREORDER(type, tree, _current_element_, left, right, command) {\
+  SGLIB___BIN_TREE_MAP_ON_ELEMENTS(type, tree, _current_element_, 0, left, right, command);\
+}
+
+#define SGLIB_BIN_TREE_MAP_ON_ELEMENTS_POSTORDER(type, tree, _current_element_, left, right, command) {\
+  SGLIB___BIN_TREE_MAP_ON_ELEMENTS(type, tree, _current_element_, 2, left, right, command);\
+}
+
+#define SGLIB___BIN_TREE_FIND_MEMBER(type, tree, elem, left, right, comparator, res) {\
+  type *_s_;\
+  int _c_;\
+  _s_ = (tree);\
+  while (_s_!=NULL) {\
+    _c_ = comparator((elem), _s_);\
+    if (_c_ < 0) _s_ = _s_->left;\
+    else if (_c_ > 0) _s_ = _s_->right;\
+    else break;\
+  }\
+  (res) = _s_;\
+}
 
 /* ---------------------------------------------------------------------------- */
 /* ---------------------------------------------------------------------------- */
-/* -                           LEVEL - 1  IMPLEMENTATION                      - */
+/* -                             LEVEL - 1  INTERFACE                         - */
 /* ---------------------------------------------------------------------------- */
 /* ---------------------------------------------------------------------------- */
 
@@ -771,34 +827,47 @@
 /*  ifield is the index of the first element in the queue                  */
 /*  jfield is the index of the first free element after the queue          */
 /*  dim is the size of the array afield                                    */
+/* !!!!!!! This data structure is NOT documented, do not use it !!!!!!!!!! */
+
+
+#define SGLIB_DEFINE_QUEUE_PROTOTYPES(queue_type, elem_type, afield, ifield, jfield, dim) \
+ extern void sglib_##queue_type##_init(queue_type *q); \
+ extern int sglib_##queue_type##_is_empty(queue_type *q); \
+ extern int sglib_##queue_type##_is_full(queue_type *q); \
+ extern elem_type sglib_##queue_type##_first_element(queue_type *q); \
+ extern elem_type *sglib_##queue_type##_first_element_ptr(queue_type *q); \
+ extern void sglib_##queue_type##_add_next(queue_type *q); \
+ extern void sglib_##queue_type##_add(queue_type *q, elem_type elem); \
+ extern void sglib_##queue_type##_delete_first(queue_type *q); \
+ extern void sglib_##queue_type##_delete(queue_type *q);
 
 
 #define SGLIB_DEFINE_QUEUE_FUNCTIONS(queue_type, elem_type, afield, ifield, jfield, dim) \
- extern void sglib_##queue_type##_init(queue_type *q) {\
+ void sglib_##queue_type##_init(queue_type *q) {\
   SGLIB_QUEUE_INIT(elem_type, q->afield, q->ifield, q->jfield);\
  }\
- extern int sglib_##queue_type##_is_empty(queue_type *q) {\
+ int sglib_##queue_type##_is_empty(queue_type *q) {\
   return(SGLIB_QUEUE_IS_EMPTY(elem_type, q->afield, q->ifield, q->jfield));\
  }\
- extern int sglib_##queue_type##_is_full(queue_type *q) {\
+ int sglib_##queue_type##_is_full(queue_type *q) {\
   return(SGLIB_QUEUE_IS_FULL(elem_type, q->afield, q->ifield, q->jfield));\
  }\
- extern elem_type sglib_##queue_type##_first_element(queue_type *q) {\
+ elem_type sglib_##queue_type##_first_element(queue_type *q) {\
   return(SGLIB_QUEUE_FIRST_ELEMENT(elem_type, q->afield, q->ifield, q->jfield));\
  }\
- extern elem_type *sglib_##queue_type##_first_element_ptr(queue_type *q) {\
+ elem_type *sglib_##queue_type##_first_element_ptr(queue_type *q) {\
   return(& SGLIB_QUEUE_FIRST_ELEMENT(elem_type, q->afield, q->ifield, q->jfield));\
  }\
- extern void sglib_##queue_type##_add_next(queue_type *q) {\
+ void sglib_##queue_type##_add_next(queue_type *q) {\
   SGLIB_QUEUE_ADD_NEXT(elem_type, q->afield, q->ifield, q->jfield, dim);\
  }\
- extern void sglib_##queue_type##_add(queue_type *q, elem_type elem) {\
+ void sglib_##queue_type##_add(queue_type *q, elem_type elem) {\
   SGLIB_QUEUE_ADD(elem_type, q->afield, elem, q->ifield, q->jfield, dim);\
  }\
- extern void sglib_##queue_type##_delete_first(queue_type *q) {\
+ void sglib_##queue_type##_delete_first(queue_type *q) {\
   SGLIB_QUEUE_DELETE_FIRST(elem_type, q->afield, q->ifield, q->jfield, dim);\
  }\
- extern void sglib_##queue_type##_delete(queue_type *q) {\
+ void sglib_##queue_type##_delete(queue_type *q) {\
   SGLIB_QUEUE_DELETE_FIRST(elem_type, q->afield, q->ifield, q->jfield, dim);\
  }
 
@@ -808,58 +877,170 @@
 /* heap_type MUST be a structure containing fields:                        */
 /*  afield is the array of size dim storing elem_type                      */
 /*  ifield is the index of the first free element after the queue          */
+/* !!!!!!! This data structure is NOT documented, do not use it !!!!!!!!!! */
 
+
+#define SGLIB_DEFINE_HEAP_PROTOTYPES(heap_type, elem_type, afield, ifield, dim, comparator, elem_exchanger) \
+ extern void sglib_##heap_type##_init(heap_type *q); \
+ extern int sglib_##heap_type##_is_empty(heap_type *q); \
+ extern int sglib_##heap_type##_is_full(heap_type *q); \
+ extern elem_type sglib_##heap_type##_first_element(heap_type *q); \
+ extern elem_type *sglib_##heap_type##_first_element_ptr(heap_type *q); \
+ extern void sglib_##heap_type##_add_next(heap_type *q); \
+ extern void sglib_##heap_type##_add(heap_type *q, elem_type elem); \
+ extern void sglib_##heap_type##_delete_first(heap_type *q); \
+ extern void sglib_##heap_type##_delete(heap_type *q)
 
 #define SGLIB_DEFINE_HEAP_FUNCTIONS(heap_type, elem_type, afield, ifield, dim, comparator, elem_exchanger) \
- extern void sglib_##heap_type##_init(heap_type *q) {\
+ void sglib_##heap_type##_init(heap_type *q) {\
   SGLIB_HEAP_INIT(elem_type, q->afield, q->ifield);\
  }\
- extern int sglib_##heap_type##_is_empty(heap_type *q) {\
+ int sglib_##heap_type##_is_empty(heap_type *q) {\
   return(SGLIB_HEAP_IS_EMPTY(elem_type, q->afield, q->ifield));\
  }\
- extern int sglib_##heap_type##_is_full(heap_type *q) {\
+ int sglib_##heap_type##_is_full(heap_type *q) {\
   return(SGLIB_HEAP_IS_FULL(elem_type, q->afield, q->ifield));\
  }\
- extern elem_type sglib_##heap_type##_first_element(heap_type *q) {\
+ elem_type sglib_##heap_type##_first_element(heap_type *q) {\
   return(SGLIB_HEAP_FIRST_ELEMENT(elem_type, q->afield, q->ifield));\
  }\
- extern elem_type *sglib_##heap_type##_first_element_ptr(heap_type *q) {\
+ elem_type *sglib_##heap_type##_first_element_ptr(heap_type *q) {\
   return(& SGLIB_HEAP_FIRST_ELEMENT(elem_type, q->afield, q->ifield));\
  }\
- extern void sglib_##heap_type##_add_next(heap_type *q) {\
+ void sglib_##heap_type##_add_next(heap_type *q) {\
   SGLIB_HEAP_ADD_NEXT(elem_type, q->afield, q->ifield, dim, comparator, elem_exchanger);\
  }\
- extern void sglib_##heap_type##_add(heap_type *q, elem_type elem) {\
+ void sglib_##heap_type##_add(heap_type *q, elem_type elem) {\
   SGLIB_HEAP_ADD(elem_type, q->afield, elem, q->ifield, dim, comparator, elem_exchanger);\
  }\
- extern void sglib_##heap_type##_delete_first(heap_type *q) {\
+ void sglib_##heap_type##_delete_first(heap_type *q) {\
   SGLIB_HEAP_DELETE_FIRST(elem_type, q->afield, q->ifield, dim, comparator, elem_exchanger);\
  }\
- extern void sglib_##heap_type##_delete(heap_type *q) {\
+ void sglib_##heap_type##_delete(heap_type *q) {\
   SGLIB_HEAP_DELETE_FIRST(elem_type, q->afield, q->ifield, dim, comparator, elem_exchanger);\
  }
 
 
-/* ------------------- hashed container (draft) (only for level 1) -------------------- */
+/* ------------------------ hashed table  (level 1) ------------------------- */
+/*
+ 
+  sglib's hash table is an array storing directly pointers to objects (not containers).
+  In this table there is a one-to-one mapping between 'objects' stored
+  in the table and indexes where they are placed. Each index is
+  pointing to exactly one 'object' and each 'object' stored in the
+  table occurs on exactly one index.  Once an object is stored in the
+  table, it can be represented via its index.
+
+  type          - is the type of elements
+  dim           - is the size of the hash array
+  hash_function - is a hashing function mapping type* to unsigned
+  comparator    - is a comparator on elements
+
+  !!!!!!! This data structure is NOT documented, do not use it !!!!!!!!!! 
+*/
+
+#define SGLIB_DEFINE_HASHED_TABLE_PROTOTYPES(type, dim, hash_function, comparator) \
+  struct sglib_hashed_##type##_iterator {\
+    int currentIndex;\
+    int (*subcomparator)(type *, type *);\
+    type *equalto;\
+  };\
+  extern void sglib_hashed_##type##_init(type *table[dim]);\
+  extern int sglib_hashed_##type##_add_if_not_member(type *table[dim], type *elem, type **member);\
+  extern int sglib_hashed_##type##_is_member(type *table[dim], type *elem);\
+  extern type * sglib_hashed_##type##_find_member(type *table[dim], type *elem);\
+  extern type *sglib_hashed_##type##_it_init(struct sglib_hashed_##type##_iterator *it, type *table[dim]); \
+  extern type *sglib_hashed_##type##_it_init_on_equal(struct sglib_hashed_##type##_iterator *it, type *table[dim], int (*subcomparator)(type *, type *), type *equalto); \
+  extern type *sglib_hashed_##type##_it_current(struct sglib_hashed_##type##_iterator *it); \
+  extern type *sglib_hashed_##type##_it_next(struct sglib_hashed_##type##_iterator *it);
+
+#define SGLIB_DEFINE_HASHED_TABLE_FUNCTIONS(type, dim, hash_function, comparator) \
+  struct sglib_hashed_##type##_iterator {\
+    int currentIndex;\
+    type **table;\
+    int (*subcomparator)(type *, type *);\
+    type *equalto;\
+  };\
+  void sglib_hashed_##type##_init(type *table[dim]) {\
+    SGLIB_HASH_TAB_INIT(type, table, dim);\
+  }\
+  int sglib_hashed_##type##_add_if_not_member(type *table[dim], type *elem, type **member) {\
+    SGLIB_HASH_TAB_ADD_IF_NOT_MEMBER(type, table, dim, elem, hash_function, comparator, *member);\
+  }\
+  int sglib_hashed_##type##_is_member(type *table[dim], type *elem) {\
+    int ind;\
+    SGLIB_HASH_TAB_IS_MEMBER(type, table, dim, elem, hash_function, ind);\
+    return(ind != -1);\
+  }\
+  type * sglib_hashed_##type##_find_member(type *table[dim], type *elem) {\
+    type *mmb;\
+    int ind;\
+    SGLIB_HASH_TAB_FIND_MEMBER(type, table, dim, elem, hash_function, comparator, ind, mmb);\
+    return(mmb);\
+  }\
+  type *sglib_hashed_##type##_it_init_on_equal(struct sglib_hashed_##type##_iterator *it, type *table[dim], int (*subcomparator)(type *, type *), type *equalto) {\
+    int i;\
+    it->table = table;\
+    it->subcomparator = subcomparator;\
+    it->equalto = equalto;\
+    for(i=0; i<(dim) && table[i]==NULL; i++) ;\
+    it->currentIndex = i;\
+    if (i<(dim)) return(table[i]);\
+    return(NULL);\
+  }\
+  type *sglib_hashed_##type##_it_init(struct sglib_hashed_##type##_iterator *it, type *table[dim]) {\
+    sglib_hashed_##type##_it_init_on_equal(it, table, NULL, NULL);\
+  }\
+  type *sglib_hashed_##type##_it_current(struct sglib_hashed_##type##_iterator *it) {\
+    return(table[it->currentIndex]);\
+  }\
+  type *sglib_hashed_##type##_it_next(struct sglib_hashed_##type##_iterator *it) {\
+    i=it->currentIndex;\
+    if (i<(dim)) {\
+      for(i++; i<(dim) && table[i]==NULL; i++) ;\
+    }\
+    it->currentIndex = i;\
+    if (i<(dim)) return(table[i]);\
+    return(NULL);\
+  }
+
+
+/* ------------------- hashed container (only for level 1)  -------------------- */
 /* 
-  hashed container is a table of fixed size containing another (dynamic) container in
-  each cell. Once an object should be inserted into hashed container, the hash function
-  is used to determine the cell and then the object is inserted into the container
-  stored in this cell. Usually the container is simply a list or a sorted list, but it 
-  can be a red-black tree as well.
+  hashed container is a table of given fixed size containing another
+  (dynamic) base container in each cell. Once an object should be
+  inserted into the hashed container, a hash function is used to
+  determine the cell where the object belongs and the object is
+  inserted into the base container stored in this cell. Usually the
+  base container is simply a list or a sorted list, but it can be a
+  red-black tree as well.
+
+  parameters:
   type - the type of the container stored in each cell.
   dim  - the size of the hashed array
-  hash_function - the hashing function hashing 'type' to unsigned.
+  hash_function - the hashing function hashing 'type *' to unsigned.  
+
 */
 
 #define SGLIB_DEFINE_HASHED_CONTAINER_PROTOTYPES(type, dim, hash_function) \
+  struct sglib_hashed_##type##_iterator {\
+    struct sglib_##type##_iterator containerIt;\
+    type **table;\
+    int currentIndex;\
+    int (*subcomparator)(type *, type *);\
+    type *equalto;\
+  };\
   extern void sglib_hashed_##type##_init(type *table[dim]);\
   extern void sglib_hashed_##type##_add(type *table[dim], type *elem);\
   extern int sglib_hashed_##type##_add_if_not_member(type *table[dim], type *elem, type **member);\
   extern void sglib_hashed_##type##_delete(type *table[dim], type *elem);\
   extern int sglib_hashed_##type##_delete_if_member(type *table[dim], type *elem, type **memb);\
   extern int sglib_hashed_##type##_is_member(type *table[dim], type *elem);\
-  extern type * sglib_hashed_##type##_find_member(type *table[dim], type *elem);
+  extern type * sglib_hashed_##type##_find_member(type *table[dim], type *elem);\
+  extern type *sglib_hashed_##type##_it_init(struct sglib_hashed_##type##_iterator *it, type *table[dim]); \
+  extern type *sglib_hashed_##type##_it_init_on_equal(struct sglib_hashed_##type##_iterator *it, type *table[dim], int (*subcomparator)(type *, type *), type *equalto); \
+  extern type *sglib_hashed_##type##_it_current(struct sglib_hashed_##type##_iterator *it); \
+  extern type *sglib_hashed_##type##_it_next(struct sglib_hashed_##type##_iterator *it);
 
 #define SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS(type, dim, hash_function) \
   /*extern unsigned hash_function(type *elem);*/\
@@ -896,6 +1077,30 @@
     unsigned i;\
     i = ((unsigned)hash_function(elem)) % (dim);\
     return(sglib_##type##_find_member((table)[i], elem));\
+  }\
+  type *sglib_hashed_##type##_it_init_on_equal(struct sglib_hashed_##type##_iterator *it, type *table[dim], int (*subcomparator)(type *, type *), type *equalto) {\
+    type *e;\
+    it->table = table;\
+    it->currentIndex = 0;\
+    it->subcomparator = subcomparator;\
+    it->equalto = equalto;\
+    e = sglib_##type##_it_init_on_equal(&it->containerIt, table[it->currentIndex], it->subcomparator, it->equalto);\
+    if (e==NULL) e = sglib_hashed_##type##_it_next(it);\
+    return(e);\
+  }\
+  type *sglib_hashed_##type##_it_init(struct sglib_hashed_##type##_iterator *it, type *table[dim]) {\
+	return(sglib_hashed_##type##_it_init_on_equal(it, table, NULL, NULL));\
+  }\
+  type *sglib_hashed_##type##_it_current(struct sglib_hashed_##type##_iterator *it) {\
+    return(sglib_##type##_it_current(&it->containerIt));\
+  }\
+  type *sglib_hashed_##type##_it_next(struct sglib_hashed_##type##_iterator *it) {\
+    type *e;\
+    e = sglib_##type##_it_next(&it->containerIt);\
+    while (e==NULL && (++(it->currentIndex))<(dim)) {\
+      e = sglib_##type##_it_init_on_equal(&it->containerIt, it->table[it->currentIndex], it->subcomparator, it->equalto);\
+    }\
+    return(e);\
   }
 
 
@@ -909,6 +1114,12 @@
 /* ------------------------------------ list (level 1) -------------------------------- */
 
 #define SGLIB_DEFINE_LIST_PROTOTYPES(type, comparator, next) \
+ struct sglib_##type##_iterator {\
+   type *currentelem;\
+   type *nextelem;\
+   int (*subcomparator)(type *, type *);\
+   type *equalto;\
+ };\
  extern void sglib_##type##_add(type **list, type *elem);\
  extern int sglib_##type##_add_if_not_member(type **list, type *elem, type **member);\
  extern void sglib_##type##_concat(type **first, type *second);\
@@ -918,7 +1129,12 @@
  extern type *sglib_##type##_find_member(type *list, type *elem);\
  extern void sglib_##type##_sort(type **list);\
  extern int sglib_##type##_len(type *list);\
- extern void sglib_##type##_reverse(type **list);
+ extern void sglib_##type##_reverse(type **list);\
+ extern type *sglib_##type##_it_init(struct sglib_##type##_iterator *it, type *list); \
+ extern type *sglib_##type##_it_init_on_equal(struct sglib_##type##_iterator *it, type *list, int (*subcomparator)(type *, type *), type *equalto); \
+ extern type *sglib_##type##_it_current(struct sglib_##type##_iterator *it); \
+ extern type *sglib_##type##_it_next(struct sglib_##type##_iterator *it);
+
 
 #define SGLIB_DEFINE_LIST_FUNCTIONS(type, comparator, next) \
  int sglib_##type##_is_member(type *list, type *elem) {\
@@ -958,12 +1174,45 @@
  }\
  void sglib_##type##_reverse(type **list) {\
    SGLIB_LIST_REVERSE(type, *list, next);\
+ }\
+ \
+ type *sglib_##type##_it_init_on_equal(struct sglib_##type##_iterator *it, type *list, int (*subcomparator)(type *, type *), type *equalto) {\
+   it->subcomparator = subcomparator;\
+   it->equalto = equalto;\
+   it->nextelem = list;\
+   return(sglib_##type##_it_next(it));\
+ }\
+ type *sglib_##type##_it_init(struct sglib_##type##_iterator *it, type *list) {\
+   return(sglib_##type##_it_init_on_equal(it, list, NULL, NULL));\
+ }\
+ type *sglib_##type##_it_current(struct sglib_##type##_iterator *it) {\
+   return(it->currentelem);\
+ }\
+ type *sglib_##type##_it_next(struct sglib_##type##_iterator *it) {\
+   type *ce, *eq;\
+   int  (*scp)(type *, type *);\
+   ce = it->nextelem;\
+   it->nextelem = NULL;\
+   if (it->subcomparator != NULL) {\
+	 eq = it->equalto; \
+     scp = it->subcomparator;\
+     while (ce!=NULL && scp(ce, eq)!=0) ce = ce->next;\
+   }\
+   it->currentelem = ce;\
+   if (ce != NULL) it->nextelem = ce->next;\
+   return(ce);\
  }
 
 /* ----------------------------- sorted list (level 1) ----------------------------------- */
 
 
 #define SGLIB_DEFINE_SORTED_LIST_PROTOTYPES(type, comparator, next) \
+ struct sglib_##type##_iterator {\
+   type *currentelem;\
+   type *nextelem;\
+   int (*subcomparator)(type *, type *);\
+   type *equalto;\
+ };\
  extern void sglib_##type##_add(type **list, type *elem);\
  extern int sglib_##type##_add_if_not_member(type **list, type *elem, type **member);\
  extern void sglib_##type##_delete(type **list, type *elem);\
@@ -972,6 +1221,10 @@
  extern type *sglib_##type##_find_member(type *list, type *elem);\
  extern int sglib_##type##_len(type *list);\
  extern void sglib_##type##_sort(type **list);\
+ extern type *sglib_##type##_it_init(struct sglib_##type##_iterator *it, type *list); \
+ extern type *sglib_##type##_it_init_on_equal(struct sglib_##type##_iterator *it, type *list, int (*subcomparator)(type *, type *), type *equalto); \
+ extern type *sglib_##type##_it_current(struct sglib_##type##_iterator *it); \
+ extern type *sglib_##type##_it_next(struct sglib_##type##_iterator *it);
 
 
 #define SGLIB_DEFINE_SORTED_LIST_FUNCTIONS(type, comparator, next) \
@@ -1007,12 +1260,48 @@
  void sglib_##type##_sort(type **list) { \
    SGLIB_LIST_SORT(type, *list, comparator, next);\
  }\
+ \
+ type *sglib_##type##_it_init_on_equal(struct sglib_##type##_iterator *it, type *list, int (*subcomparator)(type *, type *), type *equalto) {\
+   it->subcomparator = subcomparator;\
+   it->equalto = equalto;\
+   it->nextelem = list;\
+   return(sglib_##type##_it_next(it));\
+ }\
+ type *sglib_##type##_it_init(struct sglib_##type##_iterator *it, type *list) {\
+   return(sglib_##type##_it_init_on_equal(it, list, NULL, NULL));\
+ }\
+ type *sglib_##type##_it_current(struct sglib_##type##_iterator *it) {\
+   return(it->currentelem);\
+ }\
+ type *sglib_##type##_it_next(struct sglib_##type##_iterator *it) {\
+   type *ce, *eq;\
+   int  (*scp)(type *, type *);\
+   int  c;\
+   ce = it->nextelem;\
+   it->nextelem = NULL;\
+   if (it->subcomparator != NULL) {\
+	 eq = it->equalto; \
+     scp = it->subcomparator;\
+     while (ce!=NULL && (c=scp(ce, eq)) < 0) ce = ce->next;\
+     if (ce != NULL && c > 0) ce = NULL;\
+   }\
+   it->currentelem = ce;\
+   if (ce != NULL) it->nextelem = ce->next;\
+   return(ce);\
+ }
 
 
 /* ----------------------------- double linked list (level 1) ------------------------------ */
 
 
 #define SGLIB_DEFINE_DL_LIST_PROTOTYPES(type, comparator, previous, next) \
+ struct sglib_##type##_iterator {\
+   type *currentelem;\
+   type *prevelem;\
+   type *nextelem;\
+   int (*subcomparator)(type *, type *);\
+   type *equalto;\
+ };\
  extern void sglib_##type##_add(type **list, type *elem);\
  extern void sglib_##type##_add_before(type **list, type *elem);\
  extern void sglib_##type##_add_after(type **list, type *elem);\
@@ -1028,7 +1317,11 @@
  extern type *sglib_##type##_get_last(type *list);\
  extern void sglib_##type##_sort(type **list);\
  extern int sglib_##type##_len(type *list);\
- extern void sglib_##type##_reverse(type **list);
+ extern void sglib_##type##_reverse(type **list);\
+ extern type *sglib_##type##_it_init(struct sglib_##type##_iterator *it, type *list); \
+ extern type *sglib_##type##_it_init_on_equal(struct sglib_##type##_iterator *it, type *list, int (*subcomparator)(type *, type *), type *equalto); \
+ extern type *sglib_##type##_it_current(struct sglib_##type##_iterator *it); \
+ extern type *sglib_##type##_it_next(struct sglib_##type##_iterator *it);
 
 
 #define SGLIB_DEFINE_DL_LIST_FUNCTIONS(type, comparator, previous, next) \
@@ -1041,100 +1334,137 @@
  void sglib_##type##_add_before(type **list, type *elem) {\
   SGLIB_DL_LIST_ADD_BEFORE(type, *list, elem, previous, next);\
  }\
- extern int sglib_##type##_add_if_not_member(type **list, type *elem, type **member) {\
+ int sglib_##type##_add_if_not_member(type **list, type *elem, type **member) {\
   SGLIB_DL_LIST_ADD_IF_NOT_MEMBER(type, *list, elem, comparator, previous, next, *member);\
   return(*member==NULL);\
  }\
- extern int sglib_##type##_add_after_if_not_member(type **list, type *elem, type **member) {\
+ int sglib_##type##_add_after_if_not_member(type **list, type *elem, type **member) {\
   SGLIB_DL_LIST_ADD_AFTER_IF_NOT_MEMBER(type, *list, elem, comparator, previous, next, *member);\
   return(*member==NULL);\
  }\
- extern int sglib_##type##_add_before_if_not_member(type **list, type *elem, type **member) {\
+ int sglib_##type##_add_before_if_not_member(type **list, type *elem, type **member) {\
   SGLIB_DL_LIST_ADD_BEFORE_IF_NOT_MEMBER(type, *list, elem, comparator, previous, next, *member);\
   return(*member==NULL);\
  }\
  void sglib_##type##_concat(type **first, type *second) {\
    SGLIB_DL_LIST_CONCAT(type, *first, second, previous, next);\
  }\
- extern void sglib_##type##_delete(type **list, type *elem) {\
+ void sglib_##type##_delete(type **list, type *elem) {\
   SGLIB_DL_LIST_DELETE(type, *list, elem, previous, next);\
  }\
- extern int sglib_##type##_delete_if_member(type **list, type *elem, type **member) {\
+ int sglib_##type##_delete_if_member(type **list, type *elem, type **member) {\
   SGLIB_DL_LIST_DELETE_IF_MEMBER(type, *list, elem, comparator, previous, next, *member);\
   return(*member!=NULL);\
  }\
- extern int sglib_##type##_is_member(type *list, type *elem) {\
+ int sglib_##type##_is_member(type *list, type *elem) {\
    int result;\
    SGLIB_DL_LIST_IS_MEMBER(type, list, elem, previous, next, result);\
    return(result);\
  }\
- extern type *sglib_##type##_find_member(type *list, type *elem) {\
+ type *sglib_##type##_find_member(type *list, type *elem) {\
    type *result;\
    SGLIB_DL_LIST_FIND_MEMBER(type, list, elem, comparator, previous, next, result);\
    return(result);\
  }\
- extern type *sglib_##type##_get_first(type *list) {\
+ type *sglib_##type##_get_first(type *list) {\
    type *result;\
    SGLIB_DL_LIST_GET_FIRST(type, list, previous, next, result);\
    return(result);\
  }\
- extern type *sglib_##type##_get_last(type *list) {\
+ type *sglib_##type##_get_last(type *list) {\
    type *result;\
    SGLIB_DL_LIST_GET_LAST(type, list, previous, next, result);\
    return(result);\
  }\
- extern void sglib_##type##_sort(type **list) {\
+ void sglib_##type##_sort(type **list) {\
    SGLIB_DL_LIST_SORT(type, *list, comparator, previous, next);\
  }\
- extern int sglib_##type##_len(type *list) {\
+ int sglib_##type##_len(type *list) {\
    int res;\
    SGLIB_DL_LIST_LEN(type, list, previous, next, res);\
    return(res);\
  }\
- extern void sglib_##type##_reverse(type **list) {\
+ void sglib_##type##_reverse(type **list) {\
    SGLIB_DL_LIST_REVERSE(type, *list, previous, next);\
+ }\
+ \
+ type *sglib_##type##_it_init_on_equal(struct sglib_##type##_iterator *it, type *list, int (*subcomparator)(type *, type *), type *equalto) {\
+   it->subcomparator = subcomparator;\
+   it->equalto = equalto;\
+   it->prevelem = list;\
+   it->nextelem = list;\
+   if (list != NULL) it->nextelem = list->next;\
+   return(sglib_##type##_it_next(it));\
+ }\
+ type *sglib_##type##_it_init(struct sglib_##type##_iterator *it, type *list) {\
+   return(sglib_##type##_it_init_on_equal(it, list, NULL, NULL));\
+ }\
+ type *sglib_##type##_it_current(struct sglib_##type##_iterator *it) {\
+   return(it->currentelem);\
+ }\
+ type *sglib_##type##_it_next(struct sglib_##type##_iterator *it) {\
+   type *ce, *eq;\
+   int  (*scp)(type *, type *);\
+   ce = it->prevelem;\
+   it->prevelem = NULL;\
+   if (it->subcomparator != NULL) {\
+	 eq = it->equalto; \
+     scp = it->subcomparator;\
+     while (ce!=NULL && scp(eq, ce)!=0) ce = ce->previous;\
+   }\
+   if (ce != NULL) {\
+     it->prevelem = ce->previous;\
+   } else {\
+     ce = it->nextelem;\
+     it->nextelem = NULL;\
+     if (it->subcomparator != NULL) {\
+	   eq = it->equalto; \
+       scp = it->subcomparator;\
+       while (ce!=NULL && scp(ce, eq)!=0) ce = ce->next;\
+     }\
+     if (ce != NULL) it->nextelem = ce->next;\
+   }\
+   it->currentelem = ce;\
+   return(ce);\
  }
-
-
-/* TODO ----------------------------- sorted double linked list (level 1) --------------------- */
 
 
 /* --------------------------------- red-black trees (level 1) -------------------------------- */
 
 /*
 
-This implementation requires pointers to left and right sons (no
-parent pointer is needed) and one bit of additional information
-storing the color of the node. The implementation follows discrepancy
+This  implementation requires  pointers  to left  and  right sons  (no
+parent  pointer  is needed)  and  one  bit  of additional  information
+storing the color of  the node. The implementation follows discrepancy
 fixing rules from:
 http://www.cis.ohio-state.edu/~gurari/course/cis680/cis680Ch11.html
 
 */
 
-#define SGLIB___RBTREE_FIX_INSERTION_DISCREPANCY(type, tree, leftt, rightt, bits, get_color_bit, set_color_bit, RED, BLACK) {\
+#define SGLIB___RBTREE_FIX_INSERTION_DISCREPANCY(type, tree, leftt, rightt, bits, RED, BLACK) {\
   type *t, *tl, *a, *b, *c, *ar, *bl, *br, *cl, *cr;\
   t = *tree;\
   tl = t->leftt;\
-  if (t->rightt!=NULL && get_color_bit(t->rightt->bits)==RED) {\
-    if (get_color_bit(tl->bits)==RED) {\
-      if ((tl->leftt!=NULL && get_color_bit(tl->leftt->bits)==RED) \
-          || (tl->rightt!=NULL && get_color_bit(tl->rightt->bits)==RED)) {\
-        set_color_bit(t->leftt->bits,BLACK);\
-        set_color_bit(t->rightt->bits,BLACK);\
-        set_color_bit(t->bits,RED);\
+  if (t->rightt!=NULL && SGLIB___GET_VALUE(t->rightt->bits)==RED) {\
+    if (SGLIB___GET_VALUE(tl->bits)==RED) {\
+      if ((tl->leftt!=NULL && SGLIB___GET_VALUE(tl->leftt->bits)==RED) \
+          || (tl->rightt!=NULL && SGLIB___GET_VALUE(tl->rightt->bits)==RED)) {\
+        SGLIB___SET_VALUE(t->leftt->bits,BLACK);\
+        SGLIB___SET_VALUE(t->rightt->bits,BLACK);\
+        SGLIB___SET_VALUE(t->bits,RED);\
       }\
     }\
   } else {\
-    if (get_color_bit(tl->bits)==RED) {\
-      if (tl->leftt!=NULL && get_color_bit(tl->leftt->bits)==RED) {\
+    if (SGLIB___GET_VALUE(tl->bits)==RED) {\
+      if (tl->leftt!=NULL && SGLIB___GET_VALUE(tl->leftt->bits)==RED) {\
         a = t; b = tl; c = tl->leftt;\
         br = b->rightt;\
         a->leftt = br;\
         b->leftt = c; b->rightt = a;\
-        set_color_bit(a->bits,RED);\
-        set_color_bit(b->bits,BLACK);\
+        SGLIB___SET_VALUE(a->bits,RED);\
+        SGLIB___SET_VALUE(b->bits,BLACK);\
         *tree = b;\
-      } else if (tl->rightt!=NULL && get_color_bit(tl->rightt->bits)==RED) {\
+      } else if (tl->rightt!=NULL && SGLIB___GET_VALUE(tl->rightt->bits)==RED) {\
         a = t; b = tl; ar=a->rightt;\
         bl=b->leftt; c=b->rightt;\
         cl=c->leftt; cr=c->rightt;\
@@ -1142,52 +1472,53 @@ http://www.cis.ohio-state.edu/~gurari/course/cis680/cis680Ch11.html
         a->leftt = cr;\
         c->leftt = b;\
         c->rightt = a;\
-        set_color_bit(c->bits,BLACK);\
-        set_color_bit(a->bits,RED);\
+        SGLIB___SET_VALUE(c->bits,BLACK);\
+        SGLIB___SET_VALUE(a->bits,RED);\
         *tree = c;\
       }\
     }\
   }\
 }
 
-#define SGLIB___RBTREE_FIX_DELETION_DISCREPANCY(type, tree, leftt, rightt, bits, get_color_bit, set_color_bit, RED, BLACK, res) {\
+#define SGLIB___RBTREE_FIX_DELETION_DISCREPANCY(type, tree, leftt, rightt, bits, RED, BLACK, res) {\
   type  *t, *a, *b, *c, *d, *ar, *bl, *br, *cl, *cr, *dl, *dr;\
   t = a = *tree;\
   assert(t!=NULL);\
   ar = a->rightt;\
   b = t->leftt;\
   if (b==NULL) {\
-    assert(get_color_bit(t->bits)==RED);\
-    set_color_bit(t->bits,BLACK);\
+    assert(SGLIB___GET_VALUE(t->bits)==RED);\
+    SGLIB___SET_VALUE(t->bits,BLACK);\
     res = 0;\
   } else {\
     bl = b->leftt;\
     br = b->rightt;\
-    if (get_color_bit(b->bits)==RED) {\
+    if (SGLIB___GET_VALUE(b->bits)==RED) {\
       if (br==NULL) {\
         *tree = b;\
-        set_color_bit(b->bits,BLACK);\
+        SGLIB___SET_VALUE(b->bits,BLACK);\
         b->rightt = a;\
         a->leftt = br;\
+        res = 0;\
       } else {\
         c = br;\
-        assert(c!=NULL && get_color_bit(c->bits)==BLACK);\
+        assert(c!=NULL && SGLIB___GET_VALUE(c->bits)==BLACK);\
         cl = c->leftt;\
         cr = c->rightt;\
-        if ((cl==NULL||get_color_bit(cl->bits)==BLACK) && (cr==NULL||get_color_bit(cr->bits)==BLACK)) {\
+        if ((cl==NULL||SGLIB___GET_VALUE(cl->bits)==BLACK) && (cr==NULL||SGLIB___GET_VALUE(cr->bits)==BLACK)) {\
           *tree = b;\
           b->rightt = a;\
-          set_color_bit(b->bits,BLACK);\
+          SGLIB___SET_VALUE(b->bits,BLACK);\
           a->leftt = c;\
-          set_color_bit(c->bits,RED);\
+          SGLIB___SET_VALUE(c->bits,RED);\
           res = 0;\
-        } else if (cl!=NULL && get_color_bit(cl->bits)==RED) {\
-          if (cr!=NULL && get_color_bit(cr->bits)==RED) {\
+        } else if (cl!=NULL && SGLIB___GET_VALUE(cl->bits)==RED) {\
+          if (cr!=NULL && SGLIB___GET_VALUE(cr->bits)==RED) {\
             d = cr;\
             dl = d->leftt;\
             dr = d->rightt;\
             *tree = d;\
-            set_color_bit(d->bits,BLACK);\
+            SGLIB___SET_VALUE(d->bits,BLACK);\
             d->leftt = b;\
             c->rightt = dl;\
             d->rightt = a;\
@@ -1200,16 +1531,16 @@ http://www.cis.ohio-state.edu/~gurari/course/cis680/cis680Ch11.html
             b->leftt = bl;\
             b->rightt = cl;\
             a->leftt = cr;\
-            set_color_bit(cl->bits,BLACK);\
+            SGLIB___SET_VALUE(cl->bits,BLACK);\
             res = 0;\
           }\
-        } else if (cr!=NULL && get_color_bit(cr->bits)==RED) {\
-          assert(cl==NULL || get_color_bit(cl->bits)==BLACK);\
+        } else if (cr!=NULL && SGLIB___GET_VALUE(cr->bits)==RED) {\
+          assert(cl==NULL || SGLIB___GET_VALUE(cl->bits)==BLACK);\
           d = cr;\
           dl = d->leftt;\
           dr = d->rightt;\
           *tree = d;\
-          set_color_bit(d->bits,BLACK);\
+          SGLIB___SET_VALUE(d->bits,BLACK);\
           d->leftt = b;\
           c->rightt = dl;\
           d->rightt = a;\
@@ -1221,30 +1552,30 @@ http://www.cis.ohio-state.edu/~gurari/course/cis680/cis680Ch11.html
         }\
       }\
     } else {\
-      if ((bl==NULL || get_color_bit(bl->bits)==BLACK) && (br==NULL || get_color_bit(br->bits)==BLACK)) {\
-        res = (get_color_bit(a->bits)==BLACK);\
-        set_color_bit(a->bits,BLACK);\
-        set_color_bit(b->bits,RED);\
-      } else if (bl!=NULL && get_color_bit(bl->bits)==RED) {\
-        if (br==NULL || get_color_bit(br->bits)==BLACK) {\
+      if ((bl==NULL || SGLIB___GET_VALUE(bl->bits)==BLACK) && (br==NULL || SGLIB___GET_VALUE(br->bits)==BLACK)) {\
+        res = (SGLIB___GET_VALUE(a->bits)==BLACK);\
+        SGLIB___SET_VALUE(a->bits,BLACK);\
+        SGLIB___SET_VALUE(b->bits,RED);\
+      } else if (bl!=NULL && SGLIB___GET_VALUE(bl->bits)==RED) {\
+        if (br==NULL || SGLIB___GET_VALUE(br->bits)==BLACK) {\
           *tree = b;\
-          set_color_bit(b->bits,get_color_bit(a->bits));\
-          set_color_bit(a->bits,BLACK);\
+          SGLIB___SET_VALUE(b->bits,SGLIB___GET_VALUE(a->bits));\
+          SGLIB___SET_VALUE(a->bits,BLACK);\
           b->rightt = a;\
           a->leftt = br;\
-          set_color_bit(bl->bits,BLACK);\
+          SGLIB___SET_VALUE(bl->bits,BLACK);\
           res = 0;\
         } else {\
           assert(bl!=NULL);\
           assert(br!=NULL);\
-          assert(get_color_bit(bl->bits)==RED);\
-          assert(get_color_bit(br->bits)==RED);\
+          assert(SGLIB___GET_VALUE(bl->bits)==RED);\
+          assert(SGLIB___GET_VALUE(br->bits)==RED);\
           c = br;\
           cl = c->leftt;\
           cr = c->rightt;\
           *tree = c;\
-          set_color_bit(c->bits,get_color_bit(a->bits));\
-          set_color_bit(a->bits,BLACK);\
+          SGLIB___SET_VALUE(c->bits,SGLIB___GET_VALUE(a->bits));\
+          SGLIB___SET_VALUE(a->bits,BLACK);\
           c->leftt = b;\
           c->rightt = a;\
           b->rightt = cl;\
@@ -1252,13 +1583,13 @@ http://www.cis.ohio-state.edu/~gurari/course/cis680/cis680Ch11.html
           res = 0;\
         }\
       } else {\
-        assert(br!=NULL && get_color_bit(br->bits)==RED);\
+        assert(br!=NULL && SGLIB___GET_VALUE(br->bits)==RED);\
         c = br;\
         cl = c->leftt;\
         cr = c->rightt;\
         *tree = c;\
-        set_color_bit(c->bits,get_color_bit(a->bits));\
-        set_color_bit(a->bits,BLACK);\
+        SGLIB___SET_VALUE(c->bits,SGLIB___GET_VALUE(a->bits));\
+        SGLIB___SET_VALUE(a->bits,BLACK);\
         c->leftt = b;\
         c->rightt = a;\
         b->rightt = cl;\
@@ -1270,24 +1601,24 @@ http://www.cis.ohio-state.edu/~gurari/course/cis680/cis680Ch11.html
 }
 
 
-#define SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL(type, left, right, bits, get_color_bit, set_color_bit, comparator, RED, BLACK) \
+#define SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL(type, left, right, bits, comparator, RED, BLACK) \
 static void sglib___##type##_fix_left_insertion_discrepancy(type **tree) {\
-  SGLIB___RBTREE_FIX_INSERTION_DISCREPANCY(type, tree, left, right, bits, get_color_bit, set_color_bit, RED, BLACK);\
+  SGLIB___RBTREE_FIX_INSERTION_DISCREPANCY(type, tree, left, right, bits, RED, BLACK);\
 }\
 \
 static void sglib___##type##_fix_right_insertion_discrepancy(type **tree) {\
-  SGLIB___RBTREE_FIX_INSERTION_DISCREPANCY(type, tree, right, left, bits, get_color_bit, set_color_bit, RED, BLACK);\
+  SGLIB___RBTREE_FIX_INSERTION_DISCREPANCY(type, tree, right, left, bits, RED, BLACK);\
 }\
 \
 static int sglib___##type##_fix_left_deletion_discrepancy(type **tree) {\
   int       res;\
-  SGLIB___RBTREE_FIX_DELETION_DISCREPANCY(type, tree, right, left, bits, get_color_bit, set_color_bit, RED, BLACK, res);\
+  SGLIB___RBTREE_FIX_DELETION_DISCREPANCY(type, tree, right, left, bits, RED, BLACK, res);\
   return(res);\
 }\
 \
 static int sglib___##type##_fix_right_deletion_discrepancy(type **tree) {\
   int       res;\
-  SGLIB___RBTREE_FIX_DELETION_DISCREPANCY(type, tree, left, right, bits, get_color_bit, set_color_bit, RED, BLACK, res);\
+  SGLIB___RBTREE_FIX_DELETION_DISCREPANCY(type, tree, left, right, bits, RED, BLACK, res);\
   return(res);\
 }\
 \
@@ -1296,16 +1627,16 @@ static void sglib___##type##_add_recursive(type **tree, type *elem) {\
   type *t;\
   t = *tree;\
   if (t == NULL) {\
-    set_color_bit(elem->bits,RED);\
+    SGLIB___SET_VALUE(elem->bits,RED);\
     *tree =elem;\
   } else {\
     cmp = comparator(elem, t);\
     if (cmp < 0 || (cmp==0 && elem<t)) {\
       sglib___##type##_add_recursive(&t->left, elem);\
-      if (get_color_bit(t->bits)==BLACK) sglib___##type##_fix_left_insertion_discrepancy(tree);\
+      if (SGLIB___GET_VALUE(t->bits)==BLACK) sglib___##type##_fix_left_insertion_discrepancy(tree);\
     } else {\
       sglib___##type##_add_recursive(&t->right, elem);\
-      if (get_color_bit(t->bits)==BLACK) sglib___##type##_fix_right_insertion_discrepancy(tree);\
+      if (SGLIB___GET_VALUE(t->bits)==BLACK) sglib___##type##_fix_right_insertion_discrepancy(tree);\
     }\
   }\
 }\
@@ -1319,12 +1650,12 @@ static int sglib___##type##_delete_rightmost_leaf(type **tree, type **theLeaf) {
   if (t->right == NULL) {\
     *theLeaf = t;\
     if (t->left!=NULL) {\
-      if (get_color_bit(t->bits)==BLACK && get_color_bit(t->left->bits)==BLACK) res = 1;\
-      set_color_bit(t->left->bits,BLACK);\
+      if (SGLIB___GET_VALUE(t->bits)==BLACK && SGLIB___GET_VALUE(t->left->bits)==BLACK) res = 1;\
+      SGLIB___SET_VALUE(t->left->bits,BLACK);\
       *tree = t->left;\
     } else {\
       *tree = NULL;\
-      res = (get_color_bit(t->bits)==BLACK);\
+      res = (SGLIB___GET_VALUE(t->bits)==BLACK);\
     }\
   } else {\
     deepDecreased = sglib___##type##_delete_rightmost_leaf(&t->right, theLeaf);\
@@ -1358,10 +1689,10 @@ int sglib___##type##_delete_recursive(type **tree, type *elem) {\
         if (t->right == NULL) {\
           /* a leaf, delete, it; */\
           *tree = NULL;\
-          res = (get_color_bit(t->bits)==BLACK);\
+          res = (SGLIB___GET_VALUE(t->bits)==BLACK);\
         } else {\
-          if (get_color_bit(t->bits)==0 && get_color_bit(t->right->bits)==0) res = 1;\
-          set_color_bit(t->right->bits,BLACK);\
+          if (SGLIB___GET_VALUE(t->bits)==0 && SGLIB___GET_VALUE(t->right->bits)==0) res = 1;\
+          SGLIB___SET_VALUE(t->right->bits,BLACK);\
           *tree = t->right;\
         }\
       } else {\
@@ -1369,7 +1700,7 @@ int sglib___##type##_delete_recursive(type **tree, type *elem) {\
         deepDecreased = sglib___##type##_delete_rightmost_leaf(&t->left, &theLeaf);\
         theLeaf->left = t->left;\
         theLeaf->right = t->right;\
-        set_color_bit(theLeaf->bits,get_color_bit(t->bits));\
+        SGLIB___SET_VALUE(theLeaf->bits,SGLIB___GET_VALUE(t->bits));\
         *tree = theLeaf;\
         if (deepDecreased) res = sglib___##type##_fix_left_deletion_discrepancy(tree);\
       }\
@@ -1381,45 +1712,34 @@ int sglib___##type##_delete_recursive(type **tree, type *elem) {\
 void sglib_##type##_add(type **tree, type *elem) {\
   elem->left = elem->right = NULL;\
   sglib___##type##_add_recursive(tree, elem);\
-  set_color_bit((*tree)->bits,BLACK);\
+  SGLIB___SET_VALUE((*tree)->bits,BLACK);\
 }\
 \
 void sglib_##type##_delete(type **tree, type *elem) {\
   sglib___##type##_delete_recursive(tree, elem);\
-  if (*tree!=NULL) set_color_bit((*tree)->bits,BLACK);\
+  if (*tree!=NULL) SGLIB___SET_VALUE((*tree)->bits,BLACK);\
 }\
 \
 type *sglib_##type##_find_member(type *t, type *elem) {\
-  int       cmp;\
-sglib_##type##_find_member_start_point:\
-  if (t==NULL) return(NULL);\
-  cmp = comparator(elem, t);\
-  if (cmp < 0) {\
-    t = t->left;\
-    goto sglib_##type##_find_member_start_point;\
-  } else if (cmp > 0) {\
-    t = t->right;\
-    goto sglib_##type##_find_member_start_point;\
-  } else {\
-    return(t);\
-  }\
+  type *res;\
+  SGLIB___BIN_TREE_FIND_MEMBER(type, t, elem, left, right, comparator, res);\
+  return(res);\
 }\
 \
 int sglib_##type##_is_member(type *t, type *elem) {\
   int       cmp;\
-sglib_##type##_is_member_start_point:\
-  if (t==NULL) return(0);\
-  cmp = comparator(elem, t);\
-  if (cmp < 0 || (cmp==0 && elem<t)) {\
-    t = t->left;\
-    goto sglib_##type##_is_member_start_point;\
-  } else if (cmp > 0 || (cmp==0 && elem>t)) {\
-    t = t->right;\
-    goto sglib_##type##_is_member_start_point;\
-  } else {\
-    assert(t == elem);\
-    return(1);\
+  while (t!=NULL) {\
+    cmp = comparator(elem, t);\
+    if (cmp < 0 || (cmp==0 && elem<t)) {\
+      t = t->left;\
+    } else if (cmp > 0 || (cmp==0 && elem>t)) {\
+      t = t->right;\
+    } else {\
+      assert(t == elem);\
+      return(1);\
+    }\
   }\
+  return(0);\
 }\
 \
 int sglib_##type##_delete_if_member(type **tree, type *elem, type **memb) {\
@@ -1438,6 +1758,108 @@ int sglib_##type##_add_if_not_member(type **tree, type *elem, type **memb) {\
     return(0);\
   }\
 }\
+int sglib_##type##_len(type *t) {\
+    int   n;\
+    type  *e;\
+    n = 0;\
+    SGLIB_BIN_TREE_MAP_ON_ELEMENTS(type, t, e, left, right, n++);\
+    return(n);\
+}\
+\
+void sglib__##type##_it_compute_current_elem(struct sglib_##type##_iterator *it) {\
+    int   i,j,cmp;\
+    type  *s, *eqt;\
+    int   (*subcomparator)(type *, type *);\
+    eqt = it->equalto;\
+    subcomparator = it->subcomparator;\
+    it->currentelem = NULL;\
+    while(it->pathi > 0 && it->currentelem==NULL) {\
+        i = it->pathi-1;\
+        if (i >= 0) {\
+            if (it->pass[i] >= 2) {\
+                /* goto up */\
+                it->pathi --;\
+            } else {\
+              if (it->pass[i] == 0) {\
+                  /* goto left */\
+                s = it->path[i]->left;\
+              } else {\
+                /* goto right */\
+                s = it->path[i]->right;\
+              }\
+              if (eqt != NULL) {\
+                if (subcomparator == NULL) {\
+                  SGLIB___BIN_TREE_FIND_MEMBER(type, s, eqt, left, right, comparator, s);\
+                } else {\
+                  SGLIB___BIN_TREE_FIND_MEMBER(type, s, eqt, left, right, subcomparator, s);\
+                }\
+              }\
+              if  (s != NULL) {\
+                j = i+1;\
+                it->path[j] = s;\
+                it->pass[j] = 0;\
+                it->pathi ++;\
+              }\
+              it->pass[i] ++;\
+            }\
+        }\
+        if (it->pathi>0 && it->order == it->pass[it->pathi-1]) {\
+            it->currentelem = it->path[it->pathi-1];\
+        }\
+    }\
+}\
+type *sglib__##type##_it_init(struct sglib_##type##_iterator *it, type *tree, int order, int (*subcomparator)(type *, type *), type *equalto) {\
+    type *t;\
+    assert(it!=NULL);\
+    it->order = order;\
+    it->equalto = equalto;\
+    it->subcomparator = subcomparator;\
+    if (equalto == NULL) {  \
+        t = tree;\
+    } else {\
+        if (subcomparator == NULL) {\
+          SGLIB___BIN_TREE_FIND_MEMBER(type, tree, equalto, left, right, comparator, t);\
+        } else {\
+          SGLIB___BIN_TREE_FIND_MEMBER(type, tree, equalto, left, right, subcomparator, t);\
+        }\
+    }\
+    if (t == NULL) {\
+        it->pathi = 0;\
+        it->currentelem = NULL;\
+    } else {\
+        it->pathi = 1;\
+        it->pass[0] = 0;\
+        it->path[0] = t;\
+        if (order == 0) {\
+            it->currentelem = t;\
+        } else {\
+            sglib__##type##_it_compute_current_elem(it);\
+        }\
+    }\
+    return(it->currentelem);\
+}\
+type *sglib_##type##_it_init(struct sglib_##type##_iterator *it, type *tree) {\
+  return(sglib__##type##_it_init(it, tree, 2, NULL, NULL));\
+}\
+type *sglib_##type##_it_init_preorder(struct sglib_##type##_iterator *it, type *tree) {\
+  return(sglib__##type##_it_init(it, tree, 0, NULL, NULL));\
+}\
+type *sglib_##type##_it_init_inorder(struct sglib_##type##_iterator *it, type *tree) {\
+  return(sglib__##type##_it_init(it, tree, 1, NULL, NULL));\
+}\
+type *sglib_##type##_it_init_postorder(struct sglib_##type##_iterator *it, type *tree) {\
+  return(sglib__##type##_it_init(it, tree, 2, NULL, NULL));\
+}\
+type *sglib_##type##_it_init_on_equal(struct sglib_##type##_iterator *it, type *tree, int (*subcomparator)(type *, type *), type *equalto) {\
+  return(sglib__##type##_it_init(it, tree, 1, subcomparator, equalto));\
+}\
+type *sglib_##type##_it_current(struct sglib_##type##_iterator *it) {\
+  return(it->currentelem);\
+}\
+type *sglib_##type##_it_next(struct sglib_##type##_iterator *it) {\
+  sglib__##type##_it_compute_current_elem(it);\
+  return(it->currentelem);\
+}\
 \
 static void sglib___##type##_consistency_check_recursive(type *t, int *pathdeep, int cdeep) {\
   if (t==NULL) {\
@@ -1446,26 +1868,36 @@ static void sglib___##type##_consistency_check_recursive(type *t, int *pathdeep,
   } else {\
     if (t->left!=NULL) assert(comparator(t->left, t) <= 0);\
     if (t->right!=NULL) assert(comparator(t, t->right) <= 0);\
-    if (get_color_bit(t->bits) == RED) {\
-      assert(t->left == NULL || get_color_bit(t->left->bits)==BLACK);\
-      assert(t->right == NULL || get_color_bit(t->right->bits)==BLACK);\
+    if (SGLIB___GET_VALUE(t->bits) == RED) {\
+      assert(t->left == NULL || SGLIB___GET_VALUE(t->left->bits)==BLACK);\
+      assert(t->right == NULL || SGLIB___GET_VALUE(t->right->bits)==BLACK);\
       sglib___##type##_consistency_check_recursive(t->left, pathdeep, cdeep);\
       sglib___##type##_consistency_check_recursive(t->right, pathdeep, cdeep);\
     } else {\
       sglib___##type##_consistency_check_recursive(t->left, pathdeep, cdeep+1);\
-      sglib___##type##_consistency_check_recursive(t->right, pathdeep, cdeep+1);      \
+      sglib___##type##_consistency_check_recursive(t->right, pathdeep, cdeep+1);\
     }\
   }\
 }\
 \
 void sglib___##type##_consistency_check(type *t) {\
   int pathDeep;\
-  assert(t==NULL || get_color_bit(t->bits) == BLACK);\
+  assert(t==NULL || SGLIB___GET_VALUE(t->bits) == BLACK);\
   pathDeep = -1;\
   sglib___##type##_consistency_check_recursive(t, &pathDeep, 0);\
 }
 
-#define SGLIB_DEFINE_RBTREE_PROTOTYPES(type, left, right, colorbit, comparator, RED, BLACK) \
+
+#define SGLIB_DEFINE_RBTREE_PROTOTYPES(type, left, right, colorbit, comparator) \
+ struct sglib_##type##_iterator {\
+    type *currentelem;\
+    char pass[SGLIB_MAX_TREE_DEEP];\
+    type *path[SGLIB_MAX_TREE_DEEP];\
+    short int pathi;\
+    short int order;\
+    type *equalto;\
+    int (*subcomparator)(type *, type *);\
+ };\
  extern void sglib___##type##_consistency_check(type *t); \
  extern void sglib_##type##_add(type **tree, type *elem); \
  extern int sglib_##type##_add_if_not_member(type **tree, type *elem, type **memb); \
@@ -1473,11 +1905,18 @@ void sglib___##type##_consistency_check(type *t) {\
  extern int sglib_##type##_delete_if_member(type **tree, type *elem, type **memb); \
  extern int sglib_##type##_is_member(type *t, type *elem); \
  extern type *sglib_##type##_find_member(type *t, type *elem); \
- extern void sglib___##type##_consistency_check(type *t); \
+ extern int sglib_##type##_len(type *t); \
+ extern type *sglib_##type##_it_init(struct sglib_##type##_iterator *it, type *tree); \
+ extern type *sglib_##type##_it_init_preorder(struct sglib_##type##_iterator *it, type *tree); \
+ extern type *sglib_##type##_it_init_inorder(struct sglib_##type##_iterator *it, type *tree); \
+ extern type *sglib_##type##_it_init_postorder(struct sglib_##type##_iterator *it, type *tree); \
+ extern type *sglib_##type##_it_init_on_equal(struct sglib_##type##_iterator *it, type *tree, int (*subcomparator)(type *, type *), type *equalto); \
+ extern type *sglib_##type##_it_current(struct sglib_##type##_iterator *it); \
+ extern type *sglib_##type##_it_next(struct sglib_##type##_iterator *it); \
 
 
-#define SGLIB_DEFINE_RBTREE_FUNCTIONS(type, left, right, colorbit, comparator, RED, BLACK) \
-  SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL(type, left, right, colorbit, SGLIB___GET_VALUE, SGLIB___SET_VALUE, comparator, RED, BLACK)
+#define SGLIB_DEFINE_RBTREE_FUNCTIONS(type, left, right, colorbit, comparator) \
+  SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL(type, left, right, colorbit, comparator, 1, 0)
 
 
 
@@ -1490,7 +1929,7 @@ void sglib___##type##_consistency_check(type *t) {\
 
 #define SGLIB___GET_VALUE(x) (x)
 #define SGLIB___SET_VALUE(x, value) {(x) = (value);}
-#define SGLIB_ARRAY_ELEMENTS_EXCHANGER(type, a, i, j) {type _ae_tmp_; _ae_tmp_=(a)[(i)]; (a)[(i)]=(a)[(j)]; (a)[(j)]= _ae_tmp_;}
+#define SGLIB_ARRAY_ELEMENTS_EXCHANGER(type, a, i, j) {type _sgl_aee_tmp_; _sgl_aee_tmp_=(a)[(i)]; (a)[(i)]=(a)[(j)]; (a)[(j)]= _sgl_aee_tmp_;}
 
 
 #define SGLIB_NUMERIC_COMPARATOR(x, y) ((int)((x) - (y)))
@@ -1504,4 +1943,4 @@ void sglib___##type##_consistency_check(type *t) {\
 #define SGLIB_HASH_TAB_SHIFT_CONSTANT 211   /* should be a prime */
 #endif
 
-#endif /* _SGLIB__H_ */
+#endif /* _SGLIB__h_ */
