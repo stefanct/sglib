@@ -1,5 +1,5 @@
 runall: arraysort arraysort1 arraybinsearch listsort \
-        listinsertsort listinsertsort1 rbtree \
+        listinsertsort listinsertsort1 rbtree dllist \
         selftest clean
 
 
@@ -17,6 +17,10 @@ arraybinsearch: arraybinsearch.c sglib.h
 
 listsort: listsort.c sglib.h
 	gcc listsort.c
+	a.out 6 7 3 4 1 4 1 3 5
+
+dllist: dllist.c sglib.h
+	gcc dllist.c
 	a.out 6 7 3 4 1 4 1 3 5
 
 listinsertsort: listinsertsort.c sglib.h

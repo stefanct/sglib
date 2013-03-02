@@ -19,21 +19,20 @@ typedef struct rbtree {
   struct rbtree *right;
 } rbtree;
 
-#define RED 0
-#define BLACK 1
 #define CMPARATOR(x,y) ((x->n)-(y->n))
 
-SGLIB_DEFINE_RBTREE_FUNCTIONS(rbtree, left, right, color_field, CMPARATOR, RED, BLACK);
+SGLIB_DEFINE_RBTREE_FUNCTIONS(rbtree, left, right, color_field, CMPARATOR, 0, 1);
 
 int main(int argc, char **argv) {
   int i,a;
-  struct rbtree *t, *the_tree;
+  struct rbtree e, *t, *the_tree;
   the_tree = NULL;
   for (i=1; i<argc; i++) {
 	sscanf(argv[i],"%d", &a);
-	t = malloc(sizeof(struct rbtree));
-	t->n = a;
-	if (sglib_rbtree_find_member(the_tree, t)==NULL) {
+	e.n = a;
+	if (sglib_rbtree_find_member(the_tree, &e)==NULL) {
+	  t = malloc(sizeof(struct rbtree));
+	  t->n = a;
 	  sglib_rbtree_add(&the_tree, t);
 	}
   }

@@ -1,5 +1,5 @@
-// sglib selftest. This file should invoke ALL documented
-// functions and macros from sglib library and check
+// sglib selftest. This file invokes ALL documented
+// functions and macros from sglib library and checks
 // the internal consistency of results.
 
 #include <stdio.h>
@@ -9,7 +9,7 @@
 #include "sglib.h"
 
 #define DEBUG 0
-#define REPEAT 100
+#define REPEAT 1000
 #define ORDER 100
 
 int val[ORDER];
@@ -21,12 +21,16 @@ struct MyIntList {
   unsigned 			n;
   struct MyIntList 	*next;
 
+  // double linked list supplement
+  struct MyIntList 	*previous;
+  
   // rbtree supplement
   char color;
   struct MyIntList *left_ptr;
   struct MyIntList *right_ptr;
 };
 
+typedef struct MyIntList DoubleLinkedList;
 typedef struct MyIntList SortedList;
 typedef struct MyIntList ReverseSortedList;
 typedef struct MyIntList SimpleList;
@@ -47,8 +51,10 @@ int myListCmp(struct MyIntList *e1, struct MyIntList *e2) {
 typedef int rint;
 
 
+SGLIB_DEFINE_LIST_PROTOTYPES(SimpleList, myListCmp, next);
 SGLIB_DEFINE_LIST_FUNCTIONS(SimpleList, myListCmp, next);
-
+SGLIB_DEFINE_DL_LIST_PROTOTYPES(DoubleLinkedList, myListCmp, previous, next);
+SGLIB_DEFINE_DL_LIST_FUNCTIONS(DoubleLinkedList, myListCmp, previous, next);
 SGLIB_DEFINE_SORTED_LIST_PROTOTYPES(SortedList, myListCmp, next);
 SGLIB_DEFINE_SORTED_LIST_FUNCTIONS(SortedList, myListCmp, next);
 SGLIB_DEFINE_SORTED_LIST_PROTOTYPES(ReverseSortedList, MY_REVERSE_LIST_CMP, next);
@@ -91,7 +97,7 @@ void compare_counts(int *counts, int *check_counts) {
 			} else {
 				fprintf(stderr,"APPEARED\n");
 			}
-			exit(1);
+			assert(0);
 		}
 	}
 }
@@ -138,7 +144,7 @@ void check_multiple_array_correspondence(int *a, int *b) {
 	for (i=0; i<ORDER; i++) {
 		if (b[i] != ARRAY_CORRESPONDENCE_FUN(a[i])) {
 			fprintf(stderr,"[ERROR] ARRAY CORRESPONDENCE PROBLEM AT INDEX %d !!!!!!!!!!!!!!!\n", i);
-			exit(1);
+			assert(0);
 		}
 	}
 }
@@ -148,7 +154,7 @@ void check_that_int_array_is_sorted(int *a, int max) {
   for(i=0; i<max-1; i++) {
 	if (a[i]>a[i+1]) {
 	  fprintf(stderr,"[ERROR] ARRAY UNSORTED AT INDEX %d !!!!!!!!!!!!!!!\n", i);
-	  exit(1);
+	  assert(0);
 	}
   }
   return;
@@ -159,7 +165,7 @@ void check_that_int_list_is_sorted(struct MyIntList *l) {
   for(; l->next!=NULL; l=l->next) {
 	if (l->n > l->next->n) {
 	  fprintf(stderr,"[ERROR] LIST UNSORTED !!!!!!!!!!!!!!!\n");
-	  exit(1);
+	  assert(0);
 	}
   }
   return;
@@ -171,12 +177,27 @@ void check_that_int_list_is_reverse_sorted(struct MyIntList *l) {
   for(; l->next!=NULL; l=l->next) {
 	if (l->n < l->next->n) {
 	  fprintf(stderr,"[ERROR] LIST UNSORTED !!!!!!!!!!!!!!!\n");
-	  exit(1);
+	  assert(0);
 	}
   }
   return;
 }
 
+void check_double_linked_list_element(DoubleLinkedList *l) {
+  if (l==NULL) return;
+  if (l->previous != NULL) assert(l->previous->next == l);
+  if (l->next != NULL) assert(l->next->previous == l);
+}
+
+void check_double_linked_list_consistency(DoubleLinkedList *l) {
+  DoubleLinkedList *ll;
+  for(ll=l; ll!=NULL; ll=ll->previous) {
+	check_double_linked_list_element(ll);
+  }
+  for(ll=l; ll!=NULL; ll=ll->next) {
+	check_double_linked_list_element(ll);
+  }
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -184,11 +205,11 @@ void check_that_int_list_is_reverse_sorted(struct MyIntList *l) {
 /////////////////////////////////////////////////////////////////////////////////////////
 
 
-void array_quick_sort_test(int seed) {
+void array_quick_sort_test() {
 	int a[ORDER];
 	int b[ORDER];
 	int i,pass;
-	srandom(seed);
+	//srandom(seed);
 	generate_values();
 	for(i=0; i<ORDER; i++) {
 		a[i] = val[i];
@@ -210,11 +231,11 @@ void array_quick_sort_test(int seed) {
 	//&sglib_rint_array_quick_sort(a, ORDER);
 }
 
-void array_heap_sort_test(int seed) {
+void array_heap_sort_test() {
 	int a[ORDER];
 	int b[ORDER];
 	int i,pass;
-	srandom(seed);
+	//srandom(seed);
 	generate_values();
 	for(i=0; i<ORDER; i++) {
 		a[i] = val[i];
@@ -236,11 +257,11 @@ void array_heap_sort_test(int seed) {
 	//sglib_heap_sort_rint_array(a, ORDER);
 }
 
-void list_sort_test(int seed) {
+void list_sort_test() {
 	int 		a[ORDER];
 	int 		i,pass;
 	SortedList	*list, *elem, *l, *lnext;
-	srandom(seed);
+	//srandom(seed);
 	generate_values();
 	list = NULL;
 	for(i=0; i<ORDER; i++) {
@@ -272,13 +293,13 @@ void list_sort_test(int seed) {
 ////////////////////////////////  LIST TEST   ///////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
-void list_test(int seed) {
+void list_test() {
 	int i, len;
 	int a[ORDER];
 	int b[ORDER];
 	struct MyIntList	*list, *list2, *l, *t, *e, *e2, te, *memb, *memb2;
 
-	srandom(seed);
+	//srandom(seed);
 	generate_values();
 
 	list = NULL; list2 = NULL;
@@ -390,16 +411,199 @@ void list_test(int seed) {
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////  DOUBLE LINKED LIST TEST   /////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+
+void double_linked_list_test() {
+	int i, len;
+	int a[ORDER];
+	int b[ORDER];
+	struct MyIntList	*list, *list2, *list3, *list4, *l, *l2, *l3, *l4, *t, *e, *e2, te, *memb, *memb2;
+
+	//srandom(seed);
+	generate_values();
+
+	list = NULL; list2 = list3 = list4 = NULL;
+	for(i=0; i<ORDER; i++) {
+		assert(sglib_DoubleLinkedList_len(list) == i);
+		
+		a[i] = val[i];
+		b[i] = i;
+		e = malloc(sizeof(struct MyIntList));
+		e->n = val[i];
+		sglib_DoubleLinkedList_add(&list, e);
+		check_double_linked_list_consistency(list);
+
+		e2 = malloc(sizeof(struct MyIntList));
+		e2->n = val[i];
+		e2->next = NULL;
+		sglib_DoubleLinkedList_concat(&list2, e2);
+		check_double_linked_list_consistency(list2);
+
+		e2 = malloc(sizeof(struct MyIntList));
+		e2->n = val[i];
+		e2->next = NULL;
+		sglib_DoubleLinkedList_add_after(&list3, e2);
+		check_double_linked_list_consistency(list3);
+
+		e2 = malloc(sizeof(struct MyIntList));
+		e2->n = val[i];
+		e2->next = NULL;
+		sglib_DoubleLinkedList_add_before(&list4, e2);
+		check_double_linked_list_consistency(list4);
+	}
+
+	//SGLIB_DL_LIST_MAP_ON_ELEMENTS(DoubleLinkedList, list, previous, next, fprintf(stderr,"%d ", _current_element_->n)); fprintf(stderr,"\n");
+	l = sglib_DoubleLinkedList_get_first(list);
+	check_int_list_values(l);
+	l2 = sglib_DoubleLinkedList_get_first(list2);
+	check_int_list_values(l2);
+	l3 = sglib_DoubleLinkedList_get_first(list3);
+	check_int_list_values(l3);
+	l4 = sglib_DoubleLinkedList_get_first(list4);
+	check_int_list_values(l4);
+
+	sglib_DoubleLinkedList_sort(&l);
+	sglib_DoubleLinkedList_sort(&l2);
+	sglib_DoubleLinkedList_sort(&l3);
+	sglib_DoubleLinkedList_sort(&l4);
+
+	check_list_equality(l, l2);
+	check_list_equality(l, l3);
+	check_list_equality(l, l4);
+
+
+	SGLIB_DL_LIST_MAP_ON_ELEMENTS(DoubleLinkedList, list2, previous, next, {
+	  free(_current_element_);
+	});
+
+	//&for(l=list; l!=NULL; l=l->next) fprintf(stderr,"%d ", l->n); fprintf(stderr,"\n");
+	// this creates a permutation in b
+	SGLIB_ARRAY_QUICK_SORT(int, a, ORDER, SGLIB_NUMERIC_COMPARATOR, MY_AB_EXCHANGER);
+	// checkin is_member
+	for(i=0; i<ORDER; i++) {
+		te.n = val[i];
+		assert(sglib_DoubleLinkedList_find_member(list, &te) != NULL);
+		te.n = -val[i]-1;
+		assert(sglib_DoubleLinkedList_find_member(list, &te) == NULL);
+	}
+
+	SGLIB_DL_LIST_MAP_ON_ELEMENTS(DoubleLinkedList, list, previous, next, {
+	  assert(sglib_DoubleLinkedList_is_member(list, _current_element_));
+	});
+	assert( ! sglib_DoubleLinkedList_is_member(list, &te));
+
+	for(i=0; i<ORDER; i++) {
+	    te.n =  val[i];// a[b[i]];
+		SGLIB_DL_LIST_FIND_MEMBER(DoubleLinkedList, list, &te, myListCmp, previous, next, memb);
+		assert(memb!=NULL);
+		assert(list!=NULL);
+		//for(l=list; l!=NULL && l->previous!=NULL; l=l->previous);for(; l!=NULL; l=l->next) fprintf(stderr,"%d ", l->n); fprintf(stderr,"\n");
+		//fprintf(stderr,"del(%d)  ", te.n);
+		sglib_DoubleLinkedList_delete(&list, memb);
+		free(memb);
+		check_double_linked_list_consistency(list);
+	}
+	//for(l=list; l!=NULL && l->previous!=NULL; l=l->previous);for(; l!=NULL; l=l->next) fprintf(stderr,"%d ", l->n); fprintf(stderr,"\n");
+	assert(list==NULL);
+
+
+	list = list2 = list3 = NULL;
+	for(i=0; i<ORDER; i++) {
+		e = malloc(sizeof(struct MyIntList));
+		e->n = val[i];
+		sglib_DoubleLinkedList_add_if_not_member(&list, e, &memb2);
+		check_double_linked_list_consistency(list);
+		e = malloc(sizeof(struct MyIntList));
+		e->n = val[i];
+		sglib_DoubleLinkedList_add_before_if_not_member(&list2, e, &memb2);
+		check_double_linked_list_consistency(list2);
+		e = malloc(sizeof(struct MyIntList));
+		e->n = val[i];
+		sglib_DoubleLinkedList_add_after_if_not_member(&list3, e, &memb2);
+		check_double_linked_list_consistency(list3);
+	}
+
+	// checkin is_member
+	for(i=0; i<ORDER; i++) {
+		te.n = val[i];
+		assert(sglib_DoubleLinkedList_find_member(list, &te)!=NULL);
+	}
+
+	l = sglib_DoubleLinkedList_get_first(list);
+	check_int_unique_list_values(l);
+	l2 = sglib_DoubleLinkedList_get_first(list2);
+	check_int_unique_list_values(l2);
+	l3 = sglib_DoubleLinkedList_get_first(list3);
+	check_int_unique_list_values(l3);
+
+	sglib_DoubleLinkedList_sort(&l);
+	sglib_DoubleLinkedList_sort(&l2);
+	sglib_DoubleLinkedList_sort(&l3);
+
+	check_list_equality(l, l2);
+	check_list_equality(l, l3);
+
+
+	for(i=0; i<ORDER; i++) {
+		te.n = a[b[i]];
+		SGLIB_DL_LIST_FIND_MEMBER(DoubleLinkedList, list, &te, myListCmp, previous, next, memb);
+		sglib_DoubleLinkedList_delete_if_member(&list, &te, &memb2);
+		assert(memb == memb2);
+		if (memb!=NULL) free(memb);
+		check_double_linked_list_consistency(list);
+	}
+	assert(list==NULL);
+
+
+	list = NULL;
+	for(i=0; i<ORDER; i++) {
+		e = malloc(sizeof(struct MyIntList));
+		e->n = val[i];
+		sglib_DoubleLinkedList_add(&list, e);
+		check_double_linked_list_consistency(list);
+	}
+	
+	for(l=list; l!=NULL && l->previous!=NULL; l=l->previous); 
+	check_int_list_values(l);
+
+	sglib_DoubleLinkedList_sort(&list);
+	check_double_linked_list_consistency(list);
+
+	for(l=list; l!=NULL && l->previous!=NULL; l=l->previous);
+	check_that_int_list_is_sorted(l);
+	check_int_list_values(l);
+
+	//for(l=list; l!=NULL && l->previous!=NULL; l=l->previous);for(; l!=NULL; l=l->next) fprintf(stderr,"%d ", l->n); fprintf(stderr,"\n");
+	sglib_DoubleLinkedList_reverse(&list);
+	check_double_linked_list_consistency(list);
+
+	for(l=list; l!=NULL && l->previous!=NULL; l=l->previous);
+	check_int_list_values(l);
+	check_that_int_list_is_reverse_sorted(l);
+
+	list2 = NULL;
+	SGLIB_LIST_MAP_ON_ELEMENTS(DoubleLinkedList, list, next, {
+		e = malloc(sizeof(struct MyIntList));
+		e->n = _current_element_->n;
+		sglib_DoubleLinkedList_add(&list2, e);
+		check_double_linked_list_consistency(list2);
+	});
+
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////  SORTED LIST TEST   ///////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
-void sorted_list_test(int seed) {
+void sorted_list_test() {
 	int i, len;
 	int a[ORDER];
 	int b[ORDER];
 	struct MyIntList	*list, *l, *e, te, *memb, *memb2;
 
-	srandom(seed);
+	//srandom(seed);
 	generate_values();
 
 	list = NULL;
@@ -509,13 +713,13 @@ void sglib_Tree_dump(Tree *t) {
   printf("\n");fflush(stdout);
 }
 
-void rbtree_test(int seed) {
+void rbtree_test() {
   int			i;
   int a[ORDER];
   int b[ORDER];
   Tree			*tree, *e, te, *memb, *memb2;
   SimpleList	*list, *l;
-  srandom(seed);
+  //srandom(seed);
   generate_values();
   tree = NULL;
   for(i=0; i<ORDER; i++) {
@@ -608,16 +812,16 @@ void rbtree_test(int seed) {
 
 int main() {
 	int pass;
+	srandom(0);
+	srandom(time(NULL));
 	for(pass=0; pass<REPEAT; pass++) {
-		array_quick_sort_test(time(NULL));
-		array_quick_sort_test(0);
-		array_heap_sort_test(time(NULL));
-		array_heap_sort_test(0);
-		list_sort_test(time(NULL));
-		list_sort_test(0);
-		list_test(time(NULL));
-		sorted_list_test(time(NULL));
-		rbtree_test(time(NULL));
+		array_quick_sort_test();
+		array_heap_sort_test();
+		list_sort_test();
+		list_test();
+		double_linked_list_test();
+		sorted_list_test();
+		rbtree_test();
 	}
 	return(0);
 }

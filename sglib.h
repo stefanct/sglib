@@ -1,6 +1,6 @@
-// This is SGLIB version 0.0.1
+// This is SGLIB version 0.0.2
 //
-// (C) by Marian Vittek, Bratislava, http://www.xref-tech.com, 2003.
+// (C) by Marian Vittek, Bratislava, http://www.xref-tech.com, 2003,2004
 //
 // License Conditions: This software is free for non commercial use.
 // It can be used also in commercial software under Open Source Software
@@ -232,13 +232,13 @@
 
 #define SGLIB_LIST_REVERSE(type, list, next) {\
   type *_list_,*_tmp_,*_res_;\
-  _list_ = list;\
+  _list_ = (list);\
   _res_ = NULL;\
   while (_list_!=NULL) {\
     _tmp_ = _list_->next; _list_->next = _res_;\
     _res_ = _list_;   _list_ = _tmp_;\
   }\
-  list = _res_;\
+  (list) = _res_;\
 }
 
 #define SGLIB_LIST_SORT(type, list, comparator, next) {\
@@ -290,6 +290,19 @@
   *_e_ = (elem);\
 }
 
+#define SGLIB_SORTED_LIST_ADD_IF_NOT_MEMBER(type, list, elem, comparator, next, member) {\
+  type **_e_;\
+  int _cmp_res_;\
+  SGLIB_SORTED_LIST_FIND_MEMBER_OR_PLACE(type, list, elem, comparator, next, _cmp_res_, _e_);\
+  if (_cmp_res_ != 0) {\
+    (elem)->next = *_e_;\
+    *_e_ = (elem);\
+    (member) = NULL;\
+  } else {\
+    (member) = *_e_;\
+  }\
+}
+
 #define SGLIB_SORTED_LIST_DELETE(type, list, elem, next) {\
   SGLIB_LIST_DELETE(type, list, elem, next);\
 }
@@ -303,19 +316,6 @@
     *_e_ = (*_e_)->next;\
   } else {\
     (member) = NULL;\
-  }\
-}
-
-#define SGLIB_SORTED_LIST_ADD_IF_NOT_MEMBER(type, list, elem, comparator, next, member) {\
-  type **_e_;\
-  int _cmp_res_;\
-  SGLIB_SORTED_LIST_FIND_MEMBER_OR_PLACE(type, list, elem, comparator, next, _cmp_res_, _e_);\
-  if (_cmp_res_ != 0) {\
-    (elem)->next = *_e_;\
-    *_e_ = (elem);\
-    (member) = NULL;\
-  } else {\
-    (member) = *_e_;\
   }\
 }
 
@@ -350,40 +350,198 @@
   SGLIB_LIST_MAP_ON_ELEMENTS(type, list, next, command);\
 }
 
-/* ------------------------------- double linked list (draft) (level 0) ------------ */
+
+/* ------------------------------- double linked list (level 0) ------------------------- */
 
 
-#define SGLIB_DL_LIST_ADD_AT_BEGINNING(type, list, elem, previous, next) {\
-  (elem)->next = (list);\
-  (elem)->previous = NULL;\
+#define SGLIB___DL_LIST_CREATE_SINGLETON(type, list, elem, previous, next) {\
   (list) = (elem);\
-  if ((elem)->next != NULL) (elem)->next->previous = (elem);\
+  (list)->next = (list)->previous = NULL;\
 }
 
 #define SGLIB_DL_LIST_ADD_AFTER(type, place, elem, previous, next) {\
-  (elem)->next = (place)->next;\
-  (elem)->previous = (place);\
-  (place)->next = (elem);\
-  if ((elem)->next!=NULL) (elem)->next->previous = (elem);\
-}
-
-#define SGLIB_DL_LIST_DELETE(type, list, elem, previous, next) {\
-  if ((elem)->next != NULL) (elem)->next->previous = (elem)->previous;\
-  if ((elem)->previous!=NULL) (elem)->previous->next = (elem)->next;\
-  else (list) = (elem)->next;\
-}
-
-#define SGLIB_DL_LIST_SORT(type, list, comparator, previous, next) {\
-  type *_p_, *_t_;\
-  SGLIB_LIST_SORT(type, list, comparator, next);\
-  /* remake 'previous' links */\
-  _p_ = NULL;\
-  for(_t_ = (list); _t_!=NULL; _t_ = _t_->next) {\
-    _t_->previous = _p_;\
-    _p_ = _t_;\
+  if ((place) == NULL) {\
+    SGLIB___DL_LIST_CREATE_SINGLETON(type, place, elem, previous, next);\
+  } else {\
+    (elem)->next = (place)->next;\
+    (elem)->previous = (place);\
+    (place)->next = (elem);\
+    if ((elem)->next != NULL) (elem)->next->previous = (elem);\
   }\
 }
 
+#define SGLIB_DL_LIST_ADD_BEFORE(type, place, elem, previous, next) {\
+  if ((place) == NULL) {\
+    SGLIB___DL_LIST_CREATE_SINGLETON(type, place, elem, previous, next);\
+  } else {\
+    (elem)->next = (place);\
+    (elem)->previous = (place)->previous;\
+    (place)->previous = (elem);\
+    if ((elem)->previous != NULL) (elem)->previous->next = (elem);\
+  }\
+}
+
+#define SGLIB_DL_LIST_ADD(type, list, elem, previous, next) {\
+  SGLIB_DL_LIST_ADD_BEFORE(type, list, elem, previous, next)\
+}
+
+#define SGLIB___DL_LIST_GENERIC_ADD_IF_NOT_MEMBER(type, list, elem, comparator, previous, next, member, the_add_operation) {\
+  type *_dlp_;\
+  for(_dlp_ = (list); _dlp_!=NULL && comparator(_dlp_, (elem)) != 0; _dlp_= _dlp_->previous) ;\
+  if (_dlp_ == NULL && (list) != NULL) {\
+    for(_dlp_ = (list)->next; _dlp_!=NULL && comparator(_dlp_, (elem)) != 0; _dlp_= _dlp_->next) ;\
+  }\
+  (member) = _dlp_;\
+  if (_dlp_ == NULL) {\
+    the_add_operation(type, list, elem, previous, next);\
+  }\
+}
+
+#define SGLIB_DL_LIST_ADD_BEFORE_IF_NOT_MEMBER(type, list, elem, comparator, previous, next, member) {\
+  SGLIB___DL_LIST_GENERIC_ADD_IF_NOT_MEMBER(type, list, elem, comparator, previous, next, member, SGLIB_DL_LIST_ADD_BEFORE);\
+}
+
+#define SGLIB_DL_LIST_ADD_AFTER_IF_NOT_MEMBER(type, list, elem, comparator, previous, next, member) {\
+  SGLIB___DL_LIST_GENERIC_ADD_IF_NOT_MEMBER(type, list, elem, comparator, previous, next, member, SGLIB_DL_LIST_ADD_AFTER);\
+}
+
+#define SGLIB_DL_LIST_ADD_IF_NOT_MEMBER(type, list, elem, comparator, previous, next, member) {\
+  SGLIB___DL_LIST_GENERIC_ADD_IF_NOT_MEMBER(type, list, elem, comparator, previous, next, member, SGLIB_DL_LIST_ADD);\
+}
+
+#define SGLIB_DL_LIST_CONCAT(type, first, second, previous, next) {\
+  if ((first)==NULL) {\
+    (first) = (second);\
+  } else {\
+    type *_dlp_;\
+    for(_dlp_ = (first); _dlp_->next!=NULL; _dlp_=_dlp_->next) ;\
+    SGLIB_DL_LIST_ADD_AFTER(type, _dlp_, second, previous, next);\
+  }\
+}
+
+#define SGLIB_DL_LIST_DELETE(type, list, elem, previous, next) {\
+  type *_l_;\
+  _l_ = (list);\
+  if (_l_ == (elem)) {\
+    if ((elem)->previous != NULL) _l_ = (elem)->previous;\
+    else _l_ = (elem)->next;\
+  }\
+  if ((elem)->next != NULL) (elem)->next->previous = (elem)->previous;\
+  if ((elem)->previous != NULL) (elem)->previous->next = (elem)->next;\
+  (list) = _l_;\
+}
+
+#define SGLIB_DL_LIST_DELETE_IF_MEMBER(type, list, elem, comparator, previous, next, member) {\
+  type *_dlp_;\
+  for(_dlp_ = (list); _dlp_!=NULL && comparator(_dlp_, (elem)) != 0; _dlp_= _dlp_->previous) ;\
+  if (_dlp_ == NULL && (list) != NULL) {\
+    for(_dlp_ = (list)->next; _dlp_!=NULL && comparator(_dlp_, (elem)) != 0; _dlp_= _dlp_->next) ;\
+  }\
+  (member) = _dlp_;\
+  if (_dlp_ != NULL) {\
+    SGLIB_DL_LIST_DELETE(type, list, _dlp_, previous, next);\
+  }\
+}
+
+#define SGLIB_DL_LIST_IS_MEMBER(type, list, elem, previous, next, result) {\
+  type *_dlp_;\
+  SGLIB_LIST_IS_MEMBER(type, list, elem, previous, result);\
+  if (result == 0 && (list) != NULL) {\
+    _dlp_ = (list)->next;\
+    SGLIB_LIST_IS_MEMBER(type, _dlp_, elem, next, result);\
+  }\
+}
+
+#define SGLIB_DL_LIST_FIND_MEMBER(type, list, elem, comparator, previous, next, member) {\
+  type *_dlp_;\
+  SGLIB_LIST_FIND_MEMBER(type, list, elem, comparator, previous, member);\
+  if ((member) == NULL && (list) != NULL) {\
+    _dlp_ = (list)->next;\
+    SGLIB_LIST_FIND_MEMBER(type, _dlp_, elem, comparator, next, member);\
+  }\
+}
+
+#define SGLIB_DL_LIST_MAP_ON_ELEMENTS(type, list, previous, next, command) {\
+  type *_dl_;\
+  if ((list)!=NULL) {\
+    _dl_ = (list)->next;\
+    SGLIB_LIST_MAP_ON_ELEMENTS(type, list, previous, command);\
+    SGLIB_LIST_MAP_ON_ELEMENTS(type, _dl_, next, command);\
+  }\
+}
+
+#define SGLIB_DL_LIST_SORT(type, list, comparator, previous, next) {\
+  type *_dll_, *_dlp_, *_dlt_;\
+  _dll_ = (list);\
+  if (_dll_ != NULL) {\
+    for(; _dll_->previous!=NULL; _dll_=_dll_->previous) ;\
+    SGLIB_LIST_SORT(type, _dll_, comparator, next);\
+    SGLIB___DL_LIST_CREATE_FROM_LIST(type, _dll_, previous, next);\
+    (list) = _dll_;\
+  }\
+}
+
+#define SGLIB_DL_LIST_GET_FIRST(type, list, previous, next, result) {\
+  type *_dll_;\
+  _dll_ = (list);\
+  if (_dll_ != NULL) {\
+    for(; _dll_->previous!=NULL; _dll_=_dll_->previous) ;\
+  }\
+  (result) = _dll_;\
+}
+
+#define SGLIB_DL_LIST_GET_LAST(type, list, previous, next, result) {\
+  type *_dll_;\
+  _dll_ = (list);\
+  if (_dll_ != NULL) {\
+    for(; _dll_->next!=NULL; _dll_=_dll_->next) ;\
+  }\
+  (result) = _dll_;\
+}
+
+#define SGLIB_DL_LIST_LEN(type, list, previous, next, result) {\
+  type *_dl_;\
+  int _r1_, _r2_;\
+  if ((list)==NULL) {\
+    (result) = 0;\
+  } else {\
+    SGLIB_LIST_LEN(type, list, previous, _r1_);\
+    _dl_ = (list)->next;\
+    SGLIB_LIST_LEN(type, _dl_, next, _r2_);\
+    (result) = _r1_ + _r2_;\
+  }\
+}
+
+#define SGLIB_DL_LIST_REVERSE(type, list, previous, next) {\
+  type *_list_,*_nlist_,*_dlp_,*_dln_;\
+  _list_ = (list);\
+  if (_list_!=NULL) {\
+    _nlist_ = _list_->next;\
+    while (_list_!=NULL) {\
+      _dln_ = _list_->next; \
+      _dlp_ = _list_->previous; \
+      _list_->next = _dlp_;\
+      _list_->previous = _dln_;\
+      _list_ = _dlp_;\
+    }\
+    while (_nlist_!=NULL) {\
+      _dln_ = _nlist_->next; \
+      _dlp_ = _nlist_->previous; \
+      _nlist_->next = _dlp_;\
+      _nlist_->previous = _dln_;\
+      _nlist_ = _dln_;\
+    }\
+  }\
+}
+
+#define SGLIB___DL_LIST_CREATE_FROM_LIST(type, list, previous, next) {\
+  type *_dlp_, *_dlt_;\
+  _dlp_ = NULL;\
+  for(_dlt_ = (list); _dlt_!=NULL; _dlt_ = _dlt_->next) {\
+    _dlt_->previous = _dlp_;\
+    _dlp_ = _dlt_;\
+  }\
+}
 
 /* ----------------------------- sorted double linked list (draft) (level 0) ------------ */
 
@@ -393,7 +551,7 @@
   int  _i_;\
   SGLIB_SORTED_DL_LIST_FIND_PLACE(type, list, elem, comparator, next, _i_, _p_);\
   if (_p_ == NULL) {\
-    SGLIB_DL_LIST_ADD_AT_BEGINNING(type, list, elem, previous, next);\
+    SGLIB___DL_LIST_ADD_AT_BEGINNING(type, list, elem, previous, next);\
   } else {\
     SGLIB_DL_LIST_ADD_AFTER(type, _p_, elem, previous, next);\
   }\
@@ -405,7 +563,7 @@
   SGLIB_SORTED_DL_LIST_FIND_PLACE(type, list, elem, comparator, next, _i_, _p_);\
   if (_i_) {  \
     if (_p_ == NULL) {\
-      SGLIB_DL_LIST_ADD_AT_BEGINNING(type, list, elem, previous, next);\
+      SGLIB___DL_LIST_ADD_AT_BEGINNING(type, list, elem, previous, next);\
     } else {\
       SGLIB_DL_LIST_ADD_AFTER(type, _p_, elem, previous, next);\
     }\
@@ -425,10 +583,6 @@
 }
 
 /* ----------------------------------- hash table (draft) (level 0) -------------------- */
-
-#ifndef SGLIB_HASH_TAB_SHIFT_CONSTANT
-#define SGLIB_HASH_TAB_SHIFT_CONSTANT 211   /* should be a prime */
-#endif
 
 #define SGLIB_HASH_TAB_INIT(type, table, size) {\
     memset((table), 0, sizeof(type *) * (size));\
@@ -548,7 +702,7 @@
 
 #define SGLIB_DEFINE_LIST_PROTOTYPES(type, comparator, next) \
  extern void sglib_##type##_add(type **list, type *elem);\
- extern void sglib_##type##_add_if_not_member(type **list, type *elem);\
+ extern int sglib_##type##_add_if_not_member(type **list, type *elem, type **member);\
  extern void sglib_##type##_concat(type **first, type *second);\
  extern void sglib_##type##_delete(type **list, type *elem);\
  extern int sglib_##type##_delete_if_member(type **list, type *elem, type **member);\
@@ -647,33 +801,103 @@
  }\
 
 
-/* ----------------------------- double linked list (draft) (level 1) ------------------ */
+/* ----------------------------- double linked list (level 1) ------------------ */
 
 
-#define SGLIB_DEFINE_DL_LIST_PROTOTYPES(type, previous, next) \
+#define SGLIB_DEFINE_DL_LIST_PROTOTYPES(type, comparator, previous, next) \
  extern void sglib_##type##_add(type **list, type *elem);\
- extern void sglib_##type##_delete(type **list, type *elem);
+ extern void sglib_##type##_add_before(type **list, type *elem);\
+ extern void sglib_##type##_add_after(type **list, type *elem);\
+ extern int sglib_##type##_add_if_not_member(type **list, type *elem, type **member);\
+ extern int sglib_##type##_add_before_if_not_member(type **list, type *elem, type **member);\
+ extern int sglib_##type##_add_after_if_not_member(type **list, type *elem, type **member);\
+ extern void sglib_##type##_concat(type **first, type *second);\
+ extern void sglib_##type##_delete(type **list, type *elem);\
+ extern int sglib_##type##_delete_if_member(type **list, type *elem, type **member);\
+ extern int sglib_##type##_is_member(type *list, type *elem);\
+ extern type *sglib_##type##_find_member(type *list, type *elem);\
+ extern type *sglib_##type##_get_first(type *list);\
+ extern type *sglib_##type##_get_last(type *list);\
+ extern void sglib_##type##_sort(type **list);\
+ extern int sglib_##type##_len(type *list);\
+ extern void sglib_##type##_reverse(type **list);
 
 
-#define SGLIB_DEFINE_DL_LIST_FUNCTIONS(type, previous, next) \
+#define SGLIB_DEFINE_DL_LIST_FUNCTIONS(type, comparator, previous, next) \
  void sglib_##type##_add(type **list, type *elem) {\
-   SGLIB_DL_LIST_ADD_AT_BEGINNING(type, *list, elem, previous, next);\
+  SGLIB_DL_LIST_ADD(type, *list, elem, previous, next);\
  }\
- void sglib_##type##_delete(type **list, type *elem) {\
-   SGLIB_DL_LIST_DELETE(type, *list, elem, previous, next);\
+ void sglib_##type##_add_after(type **list, type *elem) {\
+  SGLIB_DL_LIST_ADD_AFTER(type, *list, elem, previous, next);\
+ }\
+ void sglib_##type##_add_before(type **list, type *elem) {\
+  SGLIB_DL_LIST_ADD_BEFORE(type, *list, elem, previous, next);\
+ }\
+ extern int sglib_##type##_add_if_not_member(type **list, type *elem, type **member) {\
+  SGLIB_DL_LIST_ADD_IF_NOT_MEMBER(type, *list, elem, comparator, previous, next, *member);\
+  return(*member==NULL);\
+ }\
+ extern int sglib_##type##_add_after_if_not_member(type **list, type *elem, type **member) {\
+  SGLIB_DL_LIST_ADD_AFTER_IF_NOT_MEMBER(type, *list, elem, comparator, previous, next, *member);\
+  return(*member==NULL);\
+ }\
+ extern int sglib_##type##_add_before_if_not_member(type **list, type *elem, type **member) {\
+  SGLIB_DL_LIST_ADD_BEFORE_IF_NOT_MEMBER(type, *list, elem, comparator, previous, next, *member);\
+  return(*member==NULL);\
+ }\
+ void sglib_##type##_concat(type **first, type *second) {\
+   SGLIB_DL_LIST_CONCAT(type, *first, second, previous, next);\
+ }\
+ extern void sglib_##type##_delete(type **list, type *elem) {\
+  SGLIB_DL_LIST_DELETE(type, *list, elem, previous, next);\
+ }\
+ extern int sglib_##type##_delete_if_member(type **list, type *elem, type **member) {\
+  SGLIB_DL_LIST_DELETE_IF_MEMBER(type, *list, elem, comparator, previous, next, *member);\
+  return(*member!=NULL);\
+ }\
+ extern int sglib_##type##_is_member(type *list, type *elem) {\
+   int result;\
+   SGLIB_DL_LIST_IS_MEMBER(type, list, elem, previous, next, result);\
+   return(result);\
+ }\
+ extern type *sglib_##type##_find_member(type *list, type *elem) {\
+   type *result;\
+   SGLIB_DL_LIST_FIND_MEMBER(type, list, elem, comparator, previous, next, result);\
+   return(result);\
+ }\
+ extern type *sglib_##type##_get_first(type *list) {\
+   type *result;\
+   SGLIB_DL_LIST_GET_FIRST(type, list, previous, next, result);\
+   return(result);\
+ }\
+ extern type *sglib_##type##_get_last(type *list) {\
+   type *result;\
+   SGLIB_DL_LIST_GET_LAST(type, list, previous, next, result);\
+   return(result);\
+ }\
+ extern void sglib_##type##_sort(type **list) {\
+   SGLIB_DL_LIST_SORT(type, *list, comparator, previous, next);\
+ }\
+ extern int sglib_##type##_len(type *list) {\
+   int res;\
+   SGLIB_DL_LIST_LEN(type, list, previous, next, res);\
+   return(res);\
+ }\
+ extern void sglib_##type##_reverse(type **list) {\
+   SGLIB_DL_LIST_REVERSE(type, *list, previous, next);\
  }
 
 
 /* ----------------------------- sorted double linked list (draft) (level 1) ------------ */
 
 
-#define SGLIB_DEFINE_SORTED_DL_LIST_PROTOTYPES(type, previous, next, comparator) \
+#define SGLIB_DEFINE_SORTED_DL_LIST_PROTOTYPES(type, comparator, previous, next) \
  extern void sglib_##type##_add(type **list, type *elem);\
  extern void sglib_##type##_delete(type **list, type *elem);\
  extern void sglib_##type##_sort(type **list, type *elem);
 
 
-#define SGLIB_DEFINE_SORTED_DL_LIST_FUNCTIONS(type, previous, next, comparator) \
+#define SGLIB_DEFINE_SORTED_DL_LIST_FUNCTIONS(type, comparator, previous, next) \
  void sglib_##type##_add(type **list, type *elem) {\
    SGLIB_SORTED_DL_LIST_ADD(type, *list, elem, comparator, previous, next);\
  }\
@@ -1081,6 +1305,10 @@ void sglib___##type##_consistency_check(type *t) {\
 
 #ifndef SGLIB_MAX_TREE_DEEP
 #define SGLIB_MAX_TREE_DEEP 128
+#endif
+
+#ifndef SGLIB_HASH_TAB_SHIFT_CONSTANT
+#define SGLIB_HASH_TAB_SHIFT_CONSTANT 211   /* should be a prime */
 #endif
 
 #endif /* _SGLIB__H_ */

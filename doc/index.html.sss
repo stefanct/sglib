@@ -25,6 +25,7 @@
 <li><a href="#array_api0">Arrays</a>
 <li><a href="#list_api0">Linked Lists</a>
 <li><a href="#sorted_list_api0">Sorted Linked Lists</a>
+<li><a href="#dl_list_api0">Double Linked Lists</a>
 <li><a href="#bin_tree_api0">Binary Trees</a>
 </ul>
 <li><a href="#api1">Application Interface - level 1</a>
@@ -32,6 +33,7 @@
 <li><a href="#array_api1">Arrays</a>
 <li><a href="#list_api1">Linked Lists</a>
 <li><a href="#sorted_list_api1">Sorted Linked Lists</a>
+<li><a href="#dl_list_api1">Double Linked Lists</a>
 <li><a href="#rbtree_api1">Red-Black Trees</a>
 </ul>
 <li><a href="#examples">Examples</a>
@@ -39,6 +41,7 @@
 <li><a href="#array_exam">Arrays</a>
 <li><a href="#list_exam">Linked Lists</a>
 <li><a href="#sorted_list_exam">Sorted Linked Lists</a>
+<li><a href="#dl_list_exam">Double Linked Lists</a>
 <li><a href="#rbtree_exam">Red-Black Trees</a>
 </ul>
 </ul>
@@ -256,6 +259,8 @@ this parameter will be respectively words:
 <code>next</code>, <code>previous</code> and <code>subtrees[1]</code>.
 
 
+
+
 <A name="comparator_equality"></a>
 <A name="pointer_equality"></a>
 
@@ -290,6 +295,66 @@ an element which is <a href="#comparator_equality">comparator equal</a> to <code
 In other words, an element is a <em>comparator equal member</em> of a container 
 if the container contains an element with the same key. Note that if an element
 is a <em>pointer equal member</em> then it is also a <em>comparator equal member</em>.
+
+
+
+
+
+<A name="dl_linked_list"></a>
+
+<h3>Double Linked lists</h3>
+
+A double linked list is any C structure containing two pointers interpreted respectively as the previous and the next
+elements of the list. The structure is entirely defined by the user, 
+sglib does not provide any default implementation.
+Following code defines several double linked lists on which sglib can operate:
+
+<center>
+<table width=90% border=1 CELLPADDING="10" CELLSPACING="1">
+<tr><td>
+<pre>
+
+struct mydoublelinkedlist {
+&nbsp;    int value;
+&nbsp;    struct mydoublelinkedlist *previous, *next;
+};
+
+struct history {
+&nbsp;    int order;
+&nbsp;    struct historyelem *h;
+&nbsp;    // ... any other records
+&nbsp;    struct history *up, *down;
+};
+
+</pre>
+</td></tr>
+</table>
+</center>
+
+Sglib provides macros for ordering and
+maintaining such lists. The list is passed to sglib using a pointer to any of its member. 
+Sglib than operates on the whole list accessible via 
+<a href="#dl_previous_element">previous</a> and <a href="#dl_next_element">next</a> 
+fields.
+Macros, such
+as insert and delete only affect the <a href="#dl_previous_element">previous</a> and <a href="#dl_next_element">next</a> 
+fields of elements, the rest of the structure is kept intact.
+
+
+<A name="dl_previous_element"></a>
+<A name="dl_next_element"></a>
+
+<h3>Previous and next parameters of macros for double linked lists</h3> 
+
+The <em>previous</em> and <em>next</em> parameters of sglib macros are names of fields
+pointing respectively to the previous and to the next elements of a <a href="#dl_linked_list">double linked list</a>. 
+For example, in the case of the first structure defined in the previous section
+those parameters will be <code>previous</code> and <code>next</code>. For the second structure
+those parameters will be <code>up</code> and <code>down</code>.
+
+
+
+
 
 
 <a name="bintree"></a>
@@ -1066,6 +1131,431 @@ elements of the list.
 
 
 #SPARSE_SHELL_SCRIPT_EXECUTE
+###############################################################################################################
+################################  DOUBLE LINKED LISTS API LEVEL 0           ###################################
+###############################################################################################################
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+
+<br><br>
+
+<a name="dl_list_api0"></a>
+
+<h2>Double Linked Lists API: level 0</h2>
+
+<table border=1 CELLPADDING="10" CELLSPACING="0">
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_ADD</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_ADD(type, list, elem, previous, next)</b></code>
+<br>
+<br>
+add an element to a list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+sglib_dl_list_type_parameter='
+<dd><code>type</code> - the type of list elements.
+'
+sglib_dl_list_previous_next_parameter='
+<dd><code>previous</code> - the name of the field pointing to the <a href="#dl_previous_element">previous</a> element of the list.
+<dd><code>next</code> - the name of the field pointing to the <a href="#dl_next_element">next</a> element of the list.
+'
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list.
+<dd><code>elem</code> - the element to add.
+'
+echo "${sglib_dl_list_previous_next_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_ADD_BEFORE</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_ADD_BEFORE(type, list, elem, previous, next)</b></code>
+<br>
+<br>
+add an element to a list. <code>Elem</code> will be inserted before the element pointed by <code>list</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list (also specifying the place where to insert the new element).
+<dd><code>elem</code> - the element to add.
+'
+echo "${sglib_dl_list_previous_next_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_ADD_AFTER</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_ADD_AFTER(type, list, elem, previous, next)</b></code>
+<br>
+<br>
+add an element to a list. <code>Elem</code> will be inserted after the element pointed by <code>list</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list (also specifying the place where to insert the new element).
+<dd><code>elem</code> - the element to add.
+'
+echo "${sglib_dl_list_previous_next_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_ADD_IF_NOT_MEMBER</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_ADD_IF_NOT_MEMBER(type, list, elem, comparator, previous, next, member)</b></code>
+<br>
+<br>
+add an element to a list if there is no <a href="#comparator_equality">comparator equal</a> element inside.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+sglib_dl_list_comparator_next_parameters='
+<dd><code>comparator</code> - the <a href="#comparator">comparator</a> used to compare elements.
+'"${sglib_dl_list_previous_next_parameter}"
+sglib_dl_list_add_member_parameter='
+<dd><code>member</code> - (output) NULL, if the <code>elem</code> has been added to the list, otherwise this variable is set to the member of the <code>list</code> which is equal to <code>elem</code>.
+'
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list.
+<dd><code>elem</code> - the element to add.
+'
+echo "${sglib_dl_list_comparator_next_parameters}"
+echo "${sglib_dl_list_add_member_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_ADD_BEFORE_IF_NOT_MEMBER</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_ADD_BEFORE_IF_NOT_MEMBER(type, list, elem, comparator, previous, next, member)</b></code>
+<br>
+<br>
+add an element to a list if there is no <a href="#comparator_equality">comparator equal</a> element inside. <code>Elem</code> will be inserted before the element pointed by <code>list</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list (also specifying the place where to insert the new element).
+<dd><code>elem</code> - the element to add.
+'
+echo "${sglib_dl_list_comparator_next_parameters}"
+echo "${sglib_dl_list_add_member_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_ADD_AFTER_IF_NOT_MEMBER</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_ADD_AFTER_IF_NOT_MEMBER(type, list, elem, comparator, previous, next, member)</b></code>
+<br>
+<br>
+add an element to a list if there is no <a href="#comparator_equality">comparator equal</a> element inside. <code>Elem</code> will be inserted after the element pointed by <code>list</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list (also specifying the place where to insert the new element).
+<dd><code>elem</code> - the element to add.
+'
+echo "${sglib_dl_list_comparator_next_parameters}"
+echo "${sglib_dl_list_add_member_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_CONCAT</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_CONCAT(type, first, second, previous, next)</b></code>
+<br>
+<br>
+concatenate two lists by appending the second at the end of the first.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>first</code> - the first list.
+<dd><code>second</code> - the second list.
+'
+echo "${sglib_dl_list_previous_next_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_DELETE</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_DELETE(type, list, elem, previous, next)</b></code>
+<br>
+<br>
+delete an element from a list. The element must be a <a href="#pointer_member">pointer equal member</a> of the list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list.
+<dd><code>elem</code> - the element to delete.
+'
+echo "${sglib_dl_list_previous_next_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_DELETE_IF_MEMBER</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_DELETE_IF_MEMBER(type, list, elem, comparator, previous, next, member)</b></code>
+<br>
+<br>
+remove a <a href="#comparator_equality">comparator equal</a> element from a list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+sglib_dl_list_delete_member_parameter='
+<dd><code>member</code> - (output) NULL, if the <code>elem</code> was not inside the <code>list</code>, otherwise this variable is set to the deleted element.
+'
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list.
+<dd><code>elem</code> - the element to delete.
+'
+echo "${sglib_dl_list_comparator_next_parameters}"
+echo "${sglib_dl_list_delete_member_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_IS_MEMBER</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_IS_MEMBER(type, list, elem, previous, next, result)</b></code>
+<br>
+<br>
+determine whether an element is a <a href="#pointer_member">pointer member</a> of a list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list.
+<dd><code>elem</code> - the element to search.
+'
+echo "${sglib_dl_list_previous_next_parameter}"
+echo '
+<dd><code>result</code> - (output) set to zero, if <code>elem</code> is not memebr of the <code>list</code>, non-zero otherwise.
+'
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_FIND_MEMBER</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_FIND_MEMBER(type, list, elem, comparator, previous, next, result)</b></code>
+<br>
+<br>
+determine whether there is a <a href="#comparator_equality">comparator equal</a> element in a list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list.
+<dd><code>elem</code> - the element to search.
+'
+echo "${sglib_dl_list_comparator_next_parameters}"
+echo '
+<dd><code>result</code> - (output) set to the resulting member. This variable is NULL if the <code>elem</code> has not been found in the <code>list</code>.
+'
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_GET_FIRST</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_GET_FIRST(type, list, previous, next, result)</b></code>
+<br>
+<br>
+get the first element of a list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list.
+'
+echo "${sglib_dl_list_previous_next_parameter}"
+echo '
+<dd><code>result</code> - (output) the first element of the <code>list</code>.
+'
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_GET_LAST</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_GET_LAST(type, list, previous, next, result)</b></code>
+<br>
+<br>
+get the last element of a list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list.
+'
+echo "${sglib_dl_list_previous_next_parameter}"
+echo '
+<dd><code>result</code> - (output) the last element of the <code>list</code>.
+'
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_LEN</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_LEN(type, list, previous, next, result)</b></code>
+<br>
+<br>
+compute the length of a list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list.
+'
+echo "${sglib_dl_list_previous_next_parameter}"
+echo '
+<dd><code>result</code> - (output) the length of the <code>list</code>.
+'
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_MAP_ON_ELEMENTS</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_MAP_ON_ELEMENTS(type, list, previous, next, command)</b></code>
+<br>
+<br>
+apply a command on all elements of a list. <code>Command</code> can refer a variable <code>_current_element_</code> going through all elements of the list accessible via the <code>previous</code> field and then via the <code>next</code> field.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list.
+'
+echo "${sglib_dl_list_previous_next_parameter}"
+echo '
+<dd><code>command</code> - any (possibly composed) statement of the C language. In the statement you can use the variable <code>_current_element_</code> going through all 
+elements of the list.
+'
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_REVERSE</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_REVERSE(type, list, previous, next)</b></code>
+<br>
+<br>
+reverse a list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list to reverse.
+'
+echo "${sglib_dl_list_previous_next_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DL_LIST_SORT</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DL_LIST_SORT(type, list, comparator, previous, next)</b></code>
+<br>
+<br>
+sort a list using mergesort. As a side effect the <code>list</code> is set to the first element of the list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_type_parameter}"
+echo '
+<dd><code>list</code> - the list to sort
+'
+echo "${sglib_dl_list_comparator_next_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+
+</table>
+
+
+#SPARSE_SHELL_SCRIPT_EXECUTE
 ######################################################################################################################
 ################################             BIN TREE API LEVEL 0           ######################################
 ######################################################################################################################
@@ -1495,7 +1985,7 @@ echo "${sglib_define_list_functions_parameters}"
 </td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="sglib_list_type_delete_if_member"></a>
-<code><b>int sglib_<font  face="Arial" color="909090">type</font>__delete_if_member(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem, <font  face="Arial" color="909090">type</font> ***result)</b></code>
+<code><b>int sglib_<font  face="Arial" color="909090">type</font>_delete_if_member(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem, <font  face="Arial" color="909090">type</font> **result)</b></code>
 <br>
 <br>
 find a <a href="#comparator_equality">comparator equal</a> element in the list and remove it.
@@ -1886,7 +2376,7 @@ echo "${sglib_define_sorted_list_functions_parameters}"
 </td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="sglib_sorted_list_type_delete_if_member"></a>
-<code><b>int sglib_<font  face="Arial" color="909090">type</font>__delete_if_member(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem, <font  face="Arial" color="909090">type</font> ***result)</b></code>
+<code><b>int sglib_<font  face="Arial" color="909090">type</font>_delete_if_member(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem, <font  face="Arial" color="909090">type</font> **result)</b></code>
 <br>
 <br>
 find a <a href="#comparator_equality">comparator equal</a> element in the list and remove it.
@@ -2050,6 +2540,613 @@ echo "${sglib_define_sorted_list_functions_parameters}"
 
 <br><br>
 <br><br>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#SPARSE_SHELL_SCRIPT_EXECUTE
+###############################################################################################################
+################################     DOUBLE LINKED LISTS API LEVEL 1           ################################
+###############################################################################################################
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+
+
+<a name="dl_list_api1"></a>
+
+<h2>Double linked lists API: level 1</h2>
+
+
+<table border=3 CELLPADDING="10" CELLSPACING="0">
+
+<tr><td width=90%>
+
+<table border=1 CELLPADDING="10" CELLSPACING="0">
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DEFINE_DL_LIST_PROTOTYPES</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DEFINE_DL_LIST_PROTOTYPES(type, comparator, previous, next)</b></code>
+<br>
+<br>
+define headers for double linked list functions. 
+Declared functions are:
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+sglib_define_dl_list_prototype_functions='
+<br><a href="#sglib_dl_list_type_add">sglib_<font  face="Arial" color="909090">type</font>_add</a>
+<br><a href="#sglib_dl_list_type_add_before">sglib_<font  face="Arial" color="909090">type</font>_add_before</a>
+<br><a href="#sglib_dl_list_type_add_after">sglib_<font  face="Arial" color="909090">type</font>_add_after</a>
+<br><a href="#sglib_dl_list_type_add_if_not_member">sglib_<font  face="Arial" color="909090">type</font>_add_if_not_member</a>
+<br><a href="#sglib_dl_list_type_add_before_if_not_member">sglib_<font  face="Arial" color="909090">type</font>_add_before_if_not_member</a>
+<br><a href="#sglib_dl_list_type_add_after_if_not_member">sglib_<font  face="Arial" color="909090">type</font>_add_after_if_not_member</a>
+<br><a href="#sglib_dl_list_type_concat">sglib_<font  face="Arial" color="909090">type</font>_concat</a>
+<br><a href="#sglib_dl_list_type_delete">sglib_<font  face="Arial" color="909090">type</font>_delete</a>
+<br><a href="#sglib_dl_list_type_delete_if_member">sglib_<font  face="Arial" color="909090">type</font>_delete_if_member</a>
+<br><a href="#sglib_dl_list_type_find_member">sglib_<font  face="Arial" color="909090">type</font>_find_member</a>
+<br><a href="#sglib_dl_list_type_is_member">sglib_<font  face="Arial" color="909090">type</font>_is_member</a>
+<br><a href="#sglib_dl_list_type_get_first">sglib_<font  face="Arial" color="909090">type</font>_get_first</a>
+<br><a href="#sglib_dl_list_type_get_last">sglib_<font  face="Arial" color="909090">type</font>_get_last</a>
+<br><a href="#sglib_dl_list_type_len">sglib_<font  face="Arial" color="909090">type</font>_len</a>
+<br><a href="#sglib_dl_list_type_sort">sglib_<font  face="Arial" color="909090">type</font>_sort</a>
+<br><a href="#sglib_dl_list_type_reverse">sglib_<font  face="Arial" color="909090">type</font>_reverse</a>
+'
+echo "${sglib_define_dl_list_prototype_functions}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<br>
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+sglib_define_dl_list_functions_parameters="${sglib_dl_list_type_parameter}${sglib_dl_list_comparator_next_parameters}"
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="SGLIB_DEFINE_DL_LIST_FUNCTIONS"></a>
+<code><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS(type, comparator, previous, next)</b></code>
+<br>
+<br>
+define functions for manipulating linked lists. 
+Defined functions are:
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_prototype_functions}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+</table>
+
+<br>
+<h4>Functions generated by above macros:</b4>
+<br>
+<br>
+
+<table border=1 CELLPADDING="10" CELLSPACING="1">
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_add</code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_add"></a>
+<code><b>void sglib_<font  face="Arial" color="909090">type</font>_add(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem)</b></code>
+<br>
+<br>
+insert an element into a list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+sglib_dl_list_functions_list_parameter='
+<dd><code>list</code> - the list.
+'
+echo "${sglib_dl_list_functions_list_parameter}"
+echo '
+<dd><code>elem</code> - the element to insert.
+'
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_add_before</code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_add_before"></a>
+<code><b>void sglib_<font  face="Arial" color="909090">type</font>_add_before(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem)</b></code>
+<br>
+<br>
+insert an element into a list. <code>Elem</code> will be inserted before the element pointed by <code>*list</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+sglib_dl_list_addbf_functions_paramets='
+<dd><code>list</code> - the list (also the place where to insert the new element).
+<dd><code>elem</code> - the element to insert.
+'
+echo "${sglib_dl_list_addbf_functions_paramets}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_add_after</code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_add_after"></a>
+<code><b>void sglib_<font  face="Arial" color="909090">type</font>_add_after(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem)</b></code>
+<br>
+<br>
+insert an element into a list. <code>Elem</code> will be inserted after the element pointed by <code>*list</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_addbf_functions_paramets}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_add_if_not_member</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_add_if_not_member"></a>
+<code><b>int sglib_<font  face="Arial" color="909090">type</font>_add_if_not_member(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem)</b></code>
+<br>
+<br>
+insert an element if there is no <a href="#comparator_equality">comparator equal</a> element in the list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_functions_list_parameter}"
+echo '
+<dd><code>elem</code> - the element to insert.
+'
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+<dd>Non-zero if the element was inserted to the list. Zero otherwise.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_add_before_if_not_member</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_add_before_if_not_member"></a>
+<code><b>int sglib_<font  face="Arial" color="909090">type</font>_add_before_if_not_member(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem)</b></code>
+<br>
+<br>
+insert an element if there is no <a href="#comparator_equality">comparator equal</a> element in the list.
+<code>Elem</code> will be inserted before the element pointed by <code>*list</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_addbf_functions_paramets}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+<dd>Non-zero if the element was inserted to the list. Zero otherwise.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_add_after_if_not_member</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_add_after_if_not_member"></a>
+<code><b>int sglib_<font  face="Arial" color="909090">type</font>_add_after_if_not_member(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem)</b></code>
+<br>
+<br>
+insert an element if there is no <a href="#comparator_equality">comparator equal</a> element in the list.
+<code>Elem</code> will be inserted before the element pointed by <code>*list</code>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_addbf_functions_paramets}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+<dd>Non-zero if the element was inserted to the list. Zero otherwise.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_concat</code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_concat"></a>
+<code><b>void sglib_<font  face="Arial" color="909090">type</font>_concat(<font  face="Arial" color="909090">type</font> **first, <font  face="Arial" color="909090">type</font> *second)</b></code>
+<br>
+<br>
+concatenate two lists by appending second at the end of the first.
+<dd><dl>
+<dt><b>Parameters:</b>
+<dd><code>first</code> - the first list, it will contain the result of the concatenation.
+<dd><code>second</code> - the second list.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_delete</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_delete"></a>
+<code><b>void sglib_<font  face="Arial" color="909090">type</font>_delete(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem)</b></code>
+<br>
+<br>
+delete an element. The element must be a <a href="#pointer_equality">pointer equal</a> member of the <em>list</em>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_functions_list_parameter}"
+echo '
+<dd><code>elem</code> - the element to delete.
+'
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_delete_if_member</code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_delete_if_member"></a>
+<code><b>int sglib_<font  face="Arial" color="909090">type</font>_delete_if_member(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem, <font  face="Arial" color="909090">type</font> **result)</b></code>
+<br>
+<br>
+find a <a href="#comparator_equality">comparator equal</a> element in the list and remove it.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_functions_list_parameter}"
+echo '
+<dd><code>elem</code> - the element to search.
+<dd><code>result</code> - an output variable pointer. The variable will be set to the element removed from the list.
+'
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+<dd>Non-zero if the element was removed from the list. Zero otherwise.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_is_member</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_is_member"></a>
+<code><b>int sglib_<font  face="Arial" color="909090">type</font>_is_member(<font  face="Arial" color="909090">type</font> *list, <font  face="Arial" color="909090">type</font> *elem)</b></code>
+<br>
+<br>
+determine whether an element is inside a list. The element is searched using <a href="#comparator_equality">pointer equality</a>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_functions_list_parameter}"
+echo '
+<dd><code>elem</code> - the element to search.
+'
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+<dd>Non-zero if the element is in the list. Zero otherwise.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_find_member</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_find_member"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_find_member(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem)</b></code>
+<br>
+<br>
+find an element in the list. The element is searched using <a href="#comparator_equality">comparator equality</a>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_functions_list_parameter}"
+echo '
+<dd><code>elem</code> - the element to search.
+'
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+<dd>The member of the list <a href="#comparator_equality">comparator equal</a> to <code>elem</code>.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_get_first</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_get_first"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_get_first(<font  face="Arial" color="909090">type</font> *list)</b></code>
+<br>
+<br>
+get the first element of a list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_functions_list_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+<dd>The first element of the <code>list</code>.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_get_last</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_get_last"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_<font  face="Arial" color="909090">type</font>_get_last(<font  face="Arial" color="909090">type</font> *list)</b></code>
+<br>
+<br>
+get the last element of a list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_functions_list_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+<dd>The last element of the <code>list</code>.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_len</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_len"></a>
+<code><b>int sglib_<font  face="Arial" color="909090">type</font>_len(<font  face="Arial" color="909090">type</font> *list)</b></code>
+<br>
+<br>
+compute the length of a list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_functions_list_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<dt><b>Returns:</b>
+<dd>The lenght of the <code>list</code>.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_sort</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_sort"></a>
+<code><b>void sglib_<font  face="Arial" color="909090">type</font>_sort(<font  face="Arial" color="909090">type</font> **list)</b></code>
+<br>
+<br>
+sort the list according to <font  face="Arial" color="909090">comparator</font>. After the sorting <code>*list</code> will point to the first element of the list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_functions_list_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_<font  face="Arial" color="909090">type</font>_reverse</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_dl_list_type_reverse"></a>
+<code><b>void sglib_<font  face="Arial" color="909090">type</font>_reverse(<font  face="Arial" color="909090">type</font> **list)</b></code>
+<br>
+<br>
+reverse the list.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_dl_list_functions_list_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_DL_LIST_FUNCTIONS"><b>SGLIB_DEFINE_DL_LIST_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_dl_list_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+</table>
+
+</td></tr>
+</table>
+
+
+
+<br><br>
+<br><br>
+
+
 
 
 
@@ -2265,7 +3362,7 @@ echo "${sglib_define_rbtree_functions_parameters}"
 </td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="sglib_rbtree_type_delete_if_member"></a>
-<code><b>int sglib_<font  face="Arial" color="909090">type</font>__delete_if_member(<font  face="Arial" color="909090">type</font> **tree, <font  face="Arial" color="909090">type</font> *elem, <font  face="Arial" color="909090">type</font> ***result)</b></code>
+<code><b>int sglib_<font  face="Arial" color="909090">type</font>_delete_if_member(<font  face="Arial" color="909090">type</font> **tree, <font  face="Arial" color="909090">type</font> *elem, <font  face="Arial" color="909090">type</font> **result)</b></code>
 <br>
 <br>
 find a <a href="#comparator_equality">comparator equal</a> element in the tree and remove it.
@@ -2472,7 +3569,7 @@ sed -e "s/</\\\&lt;/g" ../samples/arraybinsearch.c
 
 #SPARSE_SHELL_SCRIPT_EXECUTE
 ######################################################################################################################
-################################              SORTED LINKED LISTS SAMPLES                #############################
+################################              ALL LISTS SAMPLES                #######################################
 ######################################################################################################################
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
 
@@ -2480,7 +3577,7 @@ sed -e "s/</\\\&lt;/g" ../samples/arraybinsearch.c
 <a name="list_exam"></a>
 
 <br><br>
-<h2>List sample</h2>
+<h2>List Sample</h2>
 
 <center>
 
@@ -2499,7 +3596,7 @@ sed -e "s/</\\\&lt;/g" ../samples/listsort.c
 <a name="sorted_list_exam"></a>
 
 <br><br>
-<h2>Sorted List samples</h2>
+<h2>Sorted List Samples</h2>
 
 
 <center>
@@ -2527,10 +3624,37 @@ sed -e "s/</\\\&lt;/g" ../samples/listinsertsort1.c
 
 </center>
 
+<a name="dl_list_exam"></a>
+
+<br><br>
+<h2>Double Linked List Sample</h2>
+
+
+<center>
+<br>
+<table width=90% border=1 CELLPADDING="10" CELLSPACING="1">
+<tr><td>
+<pre>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+sed -e "s/</\\\&lt;/g" ../samples/dllist.c
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<pre>
+</td></tr>
+</table>
+
+</center>
+
+#SPARSE_SHELL_SCRIPT_EXECUTE
+######################################################################################################################
+################################              RED-BLACK TREE LISTS SAMPLES                ############################
+######################################################################################################################
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+
+
 <a name="rbtree_exam"></a>
 
 <br><br>
-<h2>Red Black Tree sample</h2>
+<h2>Red Black Tree Sample</h2>
 
 
 <center>
