@@ -1,15 +1,15 @@
 /* 
 
-  This is SGLIB version 1.0.1 
+  This is SGLIB version 1.0.3
 
-  (C) by Marian Vittek, Bratislava, http://www.xref-tech.com/sglib, 2003,2004 
+  (C) by Marian Vittek, Bratislava, http://www.xref-tech.com/sglib, 2003-5
 
-  License Conditions: You can use this software:
-   - freely for non-commercial purposes,
-   - or under the terms of the Open Source Software License,
-   - or under the terms of the GNU Public License.
-  If you wish to receive it under other (commercial) license conditions,
-  contact the author. 
+  License Conditions: You can use a verbatim copy (including this
+  copyright notice) of sglib freely in any project, commercial or not.
+  You can also use derivative forms freely under terms of Open Source
+  Software license or under terms of GNU Public License.  If you need
+  to use a derivative form in a commercial project, or you need sglib
+  under any other license conditions, contact the author.
 
 */
 
@@ -587,7 +587,7 @@
 #define SGLIB_DL_LIST_CONCAT(type, first, second, previous, next) {\
   if ((first)==NULL) {\
     (first) = (second);\
-  } else {\
+  } else if ((second)!=NULL) {\
     type *_dlp_;\
     for(_dlp_ = (first); _dlp_->next!=NULL; _dlp_=_dlp_->next) ;\
     SGLIB_DL_LIST_ADD_AFTER(type, _dlp_, second, previous, next);\
@@ -1940,7 +1940,8 @@ void sglib___##type##_consistency_check(type *t) {\
 #endif
 
 #ifndef SGLIB_HASH_TAB_SHIFT_CONSTANT
-#define SGLIB_HASH_TAB_SHIFT_CONSTANT 211   /* should be a prime */
+#define SGLIB_HASH_TAB_SHIFT_CONSTANT 16381   /* should be a prime */
+/* #define SGLIB_HASH_TAB_SHIFT_CONSTANT 536870912  for large tables */
 #endif
 
 #endif /* _SGLIB__h_ */

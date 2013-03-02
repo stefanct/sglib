@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  for(te=sglib_rbtree_it_init(&it,the_tree); te!=NULL; te=sglib_rbtree_it_next(&it)) {
+  for(te=sglib_rbtree_it_init_inorder(&it,the_tree); te!=NULL; te=sglib_rbtree_it_next(&it)) {
     printf("%d ", te->n);
   }
   printf("\n");
