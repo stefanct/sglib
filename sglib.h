@@ -1,10 +1,13 @@
-// This is SGLIB version 0.0.2
+// This is SGLIB version 0.0.3
 //
-// (C) by Marian Vittek, Bratislava, http://www.xref-tech.com, 2003,2004
+// (C) by Marian Vittek, Bratislava, http://www.xref-tech.com/sglib, 2003,2004
 //
-// License Conditions: This software is free for non commercial use.
-// It can be used also in commercial software under Open Source Software
-// license. For other license conditions, contact the author.
+// License Conditions: You can use this software 
+// freely for non-commercial purposes, 
+// or under terms of the Open Source Software License, 
+// or under terms of the GNU Public License.
+// If you wish to receive it under other license conditions
+// contact the author.
 //
 
 #ifndef _SGLIB__h_
@@ -21,7 +24,14 @@
 /* ---------------------------------------------------------------------------- */
 
 
-/* ----------------------------------- arrays --------------------------------- */
+/* ---------------------------------------------------------------------------- */
+/* ------------------------------ STATIC ARRAYS ------------------------------- */
+/* ---------------------------------------------------------------------------- */
+
+/* 
+  here follows basic algorithms for sorting arrays, multiple relied arrays can
+  be rearranged using user defined 'elem_exchangers'
+*/
 
 /*               HEAP - SORT  (level 0)           */
 
@@ -161,6 +171,131 @@
   (found) = _ff_;\
 }
 
+/* -------------------------------- queue (in an array) ------------------ */
+/* queue is a quadruple (a,i,j,dim) such that:                             */
+/*  a is the array storing values                                          */
+/*  i is the index of the first used element in the array                  */
+/*  j is the index of the first free element in the array                  */
+/*  dim is the size of the array a                                         */
+
+#define SGLIB_QUEUE_INIT(type, a, i, j) { i = j = 0; }
+#define SGLIB_QUEUE_IS_EMPTY(type, a, i, j) ((i)==(j))
+#define SGLIB_QUEUE_IS_FULL(type, a, i, j, dim) ((i)==((j)+1)%(dim))
+#define SGLIB_QUEUE_FIRST_ELEMENT(type, a, i, j) (a[i])
+#define SGLIB_QUEUE_ADD_NEXT(type, a, i, j, dim) {\
+  if (SGLIB_QUEUE_IS_FULL(type, a, i, j, dim)) assert(0 && "the queue is full");\
+  (j) = ((j)+1) % (dim);\
+}
+#define SGLIB_QUEUE_ADD(type, a, elem, i, j, dim) {\
+  a[j] = (elem);\
+  SGLIB_QUEUE_ADD_NEXT(type, a, i, j, dim);\
+}
+#define SGLIB_QUEUE_DELETE_FIRST(type, a, i, j, dim) {\
+  if (SGLIB_QUEUE_IS_EMPTY(type, a, i, j)) assert(0 && "the queue is empty");\
+  (i) = ((i)+1) % (dim);\
+}
+#define SGLIB_QUEUE_DELETE(type, a, i, j, dim) {\
+  SGLIB_QUEUE_DELETE_FIRST(type, a, i, j, dim);\
+}
+
+/* ----------------- priority queue (heap) (in an array) -------------------- */
+/* heap is a triple (a,i,dim) such that:                                      */
+/*  a is the array storing values                                             */
+/*  i is the index of the first free element in the array                     */
+/*  dim is the size of the array a                                            */
+
+#define SGLIB_HEAP_INIT(type, a, i) { i = 0; }
+#define SGLIB_HEAP_IS_EMPTY(type, a, i) ((i)==0)
+#define SGLIB_HEAP_IS_FULL(type, a, i, dim) ((i)==(dim))
+#define SGLIB_HEAP_FIRST_ELEMENT(type, a, i) (a[0])
+#define SGLIB_HEAP_ADD_NEXT(type, a, i, dim, comparator, elem_exchanger) {\
+  int _i_;\
+  if (SGLIB_HEAP_IS_FULL(type, a, i, dim)) assert(0 && "the heap is full");\
+  _i_ = (i)++;\
+  while (_i_ > 0 && comparator(a[_i_/2], a[_i_]) < 0) {\
+    elem_exchanger(type, a, (_i_/2), _i_);\
+    _i_ = _i_/2;\
+  }\
+}
+#define SGLIB_HEAP_ADD(type, a, elem, i, dim, comparator) {\
+  a[i] = (elem);\
+  SGLIB_HEAP_ADD_NEXT(type, a, i, dim, comparator, SGLIB_ARRAY_ELEMENTS_EXCHANGER);\
+}
+#define SGLIB_HEAP_DELETE_FIRST(type, a, i, dim, comparator, elem_exchanger) {\
+  if (SGLIB_HEAP_IS_EMPTY(type, a, i)) assert(0 && "the heap is empty");\
+  (i)--;\
+  a[0] = a[i];\
+  SGLIB___ARRAY_HEAP_DOWN(type, a, 0, i, comparator, elem_exchanger);\
+}
+#define SGLIB_HEAP_DELETE(type, a, i, dim, comparator) {\
+  SGLIB_HEAP_DELETE_FIRST(type, a, i, dim, comparator, SGLIB_ARRAY_ELEMENTS_EXCHANGER);\
+}
+
+
+/* ----------------------------------- hash table (draft) (level 0) -------------------- */
+/* 
+  In those hash tables there is a one-to-one mapping between 'objects' stored inside 
+  and indexes where they are placed. Each index is pointing to exactly one 'object' and 
+  each 'object' stored in the table occurs on exactly one index. 
+  Once an object is stored in the table, you can represent it via its index.
+
+  In case of collision when adding an object the
+  index shifted by SGLIB_HASH_TAB_SHIFT_CONSTANT. 
+
+  You can not delete an element from such hash table.
+
+*/
+
+#define SGLIB_HASH_TAB_INIT(type, table, table_size) {\
+    memset((table), 0, sizeof(type *) * (table_size));\
+}
+
+#define SGLIB_HASH_TAB_FIND_MEMBER(type, table, elem, table_size, hashing_function, comparator, resultIndex, resultElem) {\
+    unsigned _posid_;\
+    int      _count_, _res_; \
+    _count = 0;\
+    _posid_ = hashing_function(elem);\
+    _posid_ %= (table_size);\
+    while ((_res_ = ((table)[_posid_] != NULL)) && comparator(((table)[_posid_]), (elem)) != 0 && _count_<(table_size)) {\
+        _count_ ++;\
+        _posid_ = (_posid_ + SGLIB_HASH_TAB_SHIFT_CONSTANT) % (table_size);\
+    }\
+    (resultIndex) = _posid_;\
+    (resultElem) = _res_;\
+}
+
+#define SGLIB_HASH_TAB_ADD_IF_NOT_MEMBER(type, table, elem, table_size, hashing_function, comparator, resultIndex, resultAdded) {\
+  int      _ismem_;\
+  unsigned _pos_;\
+  SGLIB_HASH_TAB_IS_MEMBER(type, table, table_size, hashing_function, elem, comparator, _pos_, _ismem_);\
+  (resultAdded) = ! _ismem_;\
+  (resultIndex) = _pos_;\
+  if (! _ismem_) {\
+    if ((table)[_pos_] != NULL) {\
+      /* table is full */\
+      (resultAdded) = 0;\
+      (resultIndex) = -1;\
+    } else {\
+      (table)[_pos_] = (elem);\
+    }\
+  }\
+}
+
+#define SGLIB_HASH_TAB_MAP_ON_ELEMENTS(type, table, table_size, iteratedIndex, iteratedVariable, command) {\
+  /*unsigned  iteratedIndex;*/\
+  /*type      *iteratedVariable;*/\
+  for(iteratedIndex=0; iteratedIndex < (table_size); iteratedIndex++) {\
+    iteratedVariable = (table)[iteratedIndex];\
+    if (iteratedVariable != NULL) {\
+      command;\
+    }\
+  }\
+}
+
+/* ---------------------------------------------------------------------------- */
+/* ------------------------- DYNAMIC DATA STRUCTURES -------------------------- */
+/* ---------------------------------------------------------------------------- */
+
 /* ------------------------------------ lists (level 0) --------------------- */
 
 #define SGLIB_LIST_ADD(type, list, elem, next) {\
@@ -215,19 +350,20 @@
   (member) = _p_;\
 }
 
-#define SGLIB_LIST_MAP_ON_ELEMENTS(type, list, next, command) {\
-  type *_current_element_, *_ne_;\
-  _current_element_=(list); \
-  while (_current_element_!=NULL) {\
-    _ne_ = _current_element_->next;\
+#define SGLIB_LIST_MAP_ON_ELEMENTS(type, list, iteratedVariable, next, command) {\
+  type *_ne_;\
+  (iteratedVariable) = (list); \
+  while ((iteratedVariable)!=NULL) {\
+    _ne_ = (iteratedVariable)->next;\
     {command;};\
-    _current_element_ = _ne_;\
+    (iteratedVariable) = _ne_;\
   }\
 }
 
 #define SGLIB_LIST_LEN(type, list, next, result) {\
+  type *_ce_;\
   (result) = 0;\
-  SGLIB_LIST_MAP_ON_ELEMENTS(type, list, next, (result)++);\
+  SGLIB_LIST_MAP_ON_ELEMENTS(type, list, _ce_, next, (result)++);\
 }
 
 #define SGLIB_LIST_REVERSE(type, list, next) {\
@@ -281,6 +417,11 @@
 }
 
 /* --------------------------------- sorted list (level 0) --------------------- */
+/*
+  All operations suppose that the list is sorted and they preserve
+  this property.
+*/
+
 
 #define SGLIB_SORTED_LIST_ADD(type, list, elem, comparator, next) {\
   type **_e_;\
@@ -346,13 +487,16 @@
   SGLIB_LIST_LEN(type, list, next, result);\
 }
 
-#define SGLIB_SORTED_LIST_MAP_ON_ELEMENTS(type, list, next, command) {\
-  SGLIB_LIST_MAP_ON_ELEMENTS(type, list, next, command);\
+#define SGLIB_SORTED_LIST_MAP_ON_ELEMENTS(type, list, iteratedVariable, next, command) {\
+  SGLIB_LIST_MAP_ON_ELEMENTS(type, list, iteratedVariable, next, command);\
 }
 
 
 /* ------------------------------- double linked list (level 0) ------------------------- */
-
+/*
+  Lists with back pointer to previous element. Those lists implements deletion
+  of an element in a constant time.
+*/
 
 #define SGLIB___DL_LIST_CREATE_SINGLETON(type, list, elem, previous, next) {\
   (list) = (elem);\
@@ -461,12 +605,12 @@
   }\
 }
 
-#define SGLIB_DL_LIST_MAP_ON_ELEMENTS(type, list, previous, next, command) {\
+#define SGLIB_DL_LIST_MAP_ON_ELEMENTS(type, list, iteratedVariable, previous, next, command) {\
   type *_dl_;\
   if ((list)!=NULL) {\
     _dl_ = (list)->next;\
-    SGLIB_LIST_MAP_ON_ELEMENTS(type, list, previous, command);\
-    SGLIB_LIST_MAP_ON_ELEMENTS(type, _dl_, next, command);\
+    SGLIB_LIST_MAP_ON_ELEMENTS(type, list, iteratedVariable, previous, command);\
+    SGLIB_LIST_MAP_ON_ELEMENTS(type, _dl_, iteratedVariable, next, command);\
   }\
 }
 
@@ -543,102 +687,20 @@
   }\
 }
 
-/* ----------------------------- sorted double linked list (draft) (level 0) ------------ */
+/* TODO: --------------------- sorted double linked list (level 0) --------------------- */
 
 
-#define SGLIB_SORTED_DL_LIST_ADD(type, list, elem, comparator, previous, next) {\
-  type *_p_;\
-  int  _i_;\
-  SGLIB_SORTED_DL_LIST_FIND_PLACE(type, list, elem, comparator, next, _i_, _p_);\
-  if (_p_ == NULL) {\
-    SGLIB___DL_LIST_ADD_AT_BEGINNING(type, list, elem, previous, next);\
-  } else {\
-    SGLIB_DL_LIST_ADD_AFTER(type, _p_, elem, previous, next);\
-  }\
-}
-
-#define SGLIB_SORTED_DL_LIST_ADD_IF_NOT_MEMBER(type, list, elem, comparator, previous, next) {\
-  type *_p_;\
-  int  _i_;\
-  SGLIB_SORTED_DL_LIST_FIND_PLACE(type, list, elem, comparator, next, _i_, _p_);\
-  if (_i_) {  \
-    if (_p_ == NULL) {\
-      SGLIB___DL_LIST_ADD_AT_BEGINNING(type, list, elem, previous, next);\
-    } else {\
-      SGLIB_DL_LIST_ADD_AFTER(type, _p_, elem, previous, next);\
-    }\
-  }\
-}
-
-#define SGLIB_SORTED_DL_LIST_FIND_PLACE(type, list, elem, comparator, next, comparator_result, member_ptr) {\
-  if ((list) == NULL || ((comparator_result)=comparator(((list)->next), (elem))) >= 0) {\
-    (member_ptr) = NULL;\
-    (comparator_result) = -1;\
-  } else {\
-    for( (member_ptr) = list; \
-         (member_ptr)->next != NULL && ((comparator_result)=comparator(((member_ptr)->next), (elem))) < 0; \
-         (member_ptr) = (member_ptr)->next) ;\
-    if ((member_ptr)->next == NULL) (comparator_result) = -1;\
-  }\
-}
-
-/* ----------------------------------- hash table (draft) (level 0) -------------------- */
-
-#define SGLIB_HASH_TAB_INIT(type, table, size) {\
-    memset((table), 0, sizeof(type *) * (size));\
-}
-
-#define SGLIB_HASH_TAB_IS_MEMBER(type, table, size, hashing_function, elem, comparator, position, result) {\
-    unsigned _posid_;\
-    int      _count_, _res_; \
-    _count = 0;\
-    _posid_ = hashing_function(elem);\
-    _posid_ %= (size);\
-    while ((_res_ = ((table)[_posid_] != NULL)) && comparator(((table)[_posid_]), (elem)) != 0 && _count_<(size)) {\
-        _count_ ++;\
-        _posid_ = (_posid_ + SGLIB_HASH_TAB_SHIFT_CONSTANT) % (size);\
-    }\
-    (position) = _posid_;\
-    (result) = _res_;\
-}
-
-#define SGLIB_HASH_TAB_ADD_IF_NOT_MEMBER(type, table, size, hashing_function, elem, comparator, position, added) {\
-  int      _ismem_;\
-  unsigned _pos_;\
-  SGLIB_HASH_TAB_IS_MEMBER(type, table, size, hashing_function, elem, comparator, _pos_, _ismem_);\
-  (added) = ! _ismem_;\
-  (position) = _pos_;\
-  if (! _ismem_) {\
-    if ((table)[_pos_] != NULL) {\
-      /* table is full */\
-      (added) = 0;\
-      (position) = -1;\
-    } else {\
-      (table)[_pos_] = (elem);\
-    }\
-  }\
-}
-
-#define SGLIB_HASH_TAB_MAP(type, table, size, command) {\
-  unsigned  _current_index_;\
-  type     *_current_element_;\
-  for(_current_index_=0; _current_index_ < (size); _current_index_++) {\
-    _current_element_ = (table)[_current_index_];\
-    if (_current_element_ != NULL) {\
-      command;\
-    }\
-  }\
-}
 
 /* ------------------------------- binary tree traversal (level 0) -------------------- */
+/* TODO: Do this with iterators */
 
-#define SGLIB_BIN_TREE_MAP_ON_ELEMENTS(type, tree, left, right, command) {\
+#define SGLIB_BIN_TREE_MAP_ON_ELEMENTS(type, tree, _current_element_, left, right, command) {\
   type *_path_[SGLIB_MAX_TREE_DEEP];\
   /* this is non-recursive implementation of tree traversal */\
   /* it maintains the path to the current node in the array '_path_' */\
   /* the _path_[0] contains the root of the tree; */\
   /* the _path_[_pathi_-1] contains the parent of _current_element_ */\
-  type *_current_element_, *_upn_;\
+  type *_upn_;\
   int _pathi_;\
   int _state_;  /* 0 - goto left; 1 - inspect && goto right; 2 - goto up */\
   if (tree != NULL) {\
@@ -682,7 +744,11 @@
 
 
 
-/* ----------------------------- array sorting (level 1) ------------ */
+/* ---------------------------------------------------------------------------- */
+/* ------------------------------ STATIC ARRAYS ------------------------------- */
+/* ---------------------------------------------------------------------------- */
+
+/* ----------------------------- array sorting (level 1) ---------------------- */
 
 #define SGLIB_DEFINE_ARRAY_SORTING_PROTOTYPES(type, comparator) \
  extern void sglib_##type##_array_quick_sort(type *a, int max);\
@@ -698,7 +764,149 @@
  }\
 
 
-/* ----------------------------- list (level 1) ------------ */
+/* ----------------------------- array queue (level 1) ------------------- */
+/* sglib's queue is stored in a fixed sized array                          */
+/* queue_type MUST be a structure containing fields:                       */
+/*  afield is the array storing elem_type                                  */
+/*  ifield is the index of the first element in the queue                  */
+/*  jfield is the index of the first free element after the queue          */
+/*  dim is the size of the array afield                                    */
+
+
+#define SGLIB_DEFINE_QUEUE_FUNCTIONS(queue_type, elem_type, afield, ifield, jfield, dim) \
+ extern void sglib_##queue_type##_init(queue_type *q) {\
+  SGLIB_QUEUE_INIT(elem_type, q->afield, q->ifield, q->jfield);\
+ }\
+ extern int sglib_##queue_type##_is_empty(queue_type *q) {\
+  return(SGLIB_QUEUE_IS_EMPTY(elem_type, q->afield, q->ifield, q->jfield));\
+ }\
+ extern int sglib_##queue_type##_is_full(queue_type *q) {\
+  return(SGLIB_QUEUE_IS_FULL(elem_type, q->afield, q->ifield, q->jfield));\
+ }\
+ extern elem_type sglib_##queue_type##_first_element(queue_type *q) {\
+  return(SGLIB_QUEUE_FIRST_ELEMENT(elem_type, q->afield, q->ifield, q->jfield));\
+ }\
+ extern elem_type *sglib_##queue_type##_first_element_ptr(queue_type *q) {\
+  return(& SGLIB_QUEUE_FIRST_ELEMENT(elem_type, q->afield, q->ifield, q->jfield));\
+ }\
+ extern void sglib_##queue_type##_add_next(queue_type *q) {\
+  SGLIB_QUEUE_ADD_NEXT(elem_type, q->afield, q->ifield, q->jfield, dim);\
+ }\
+ extern void sglib_##queue_type##_add(queue_type *q, elem_type elem) {\
+  SGLIB_QUEUE_ADD(elem_type, q->afield, elem, q->ifield, q->jfield, dim);\
+ }\
+ extern void sglib_##queue_type##_delete_first(queue_type *q) {\
+  SGLIB_QUEUE_DELETE_FIRST(elem_type, q->afield, q->ifield, q->jfield, dim);\
+ }\
+ extern void sglib_##queue_type##_delete(queue_type *q) {\
+  SGLIB_QUEUE_DELETE_FIRST(elem_type, q->afield, q->ifield, q->jfield, dim);\
+ }
+
+
+/* ------------------------ array heap (level 1) ------------------------- */
+/* sglib's heap is a priority queue implemented in a fixed sized array     */
+/* heap_type MUST be a structure containing fields:                        */
+/*  afield is the array of size dim storing elem_type                      */
+/*  ifield is the index of the first free element after the queue          */
+
+
+#define SGLIB_DEFINE_HEAP_FUNCTIONS(heap_type, elem_type, afield, ifield, dim, comparator, elem_exchanger) \
+ extern void sglib_##heap_type##_init(heap_type *q) {\
+  SGLIB_HEAP_INIT(elem_type, q->afield, q->ifield);\
+ }\
+ extern int sglib_##heap_type##_is_empty(heap_type *q) {\
+  return(SGLIB_HEAP_IS_EMPTY(elem_type, q->afield, q->ifield));\
+ }\
+ extern int sglib_##heap_type##_is_full(heap_type *q) {\
+  return(SGLIB_HEAP_IS_FULL(elem_type, q->afield, q->ifield));\
+ }\
+ extern elem_type sglib_##heap_type##_first_element(heap_type *q) {\
+  return(SGLIB_HEAP_FIRST_ELEMENT(elem_type, q->afield, q->ifield));\
+ }\
+ extern elem_type *sglib_##heap_type##_first_element_ptr(heap_type *q) {\
+  return(& SGLIB_HEAP_FIRST_ELEMENT(elem_type, q->afield, q->ifield));\
+ }\
+ extern void sglib_##heap_type##_add_next(heap_type *q) {\
+  SGLIB_HEAP_ADD_NEXT(elem_type, q->afield, q->ifield, dim, comparator, elem_exchanger);\
+ }\
+ extern void sglib_##heap_type##_add(heap_type *q, elem_type elem) {\
+  SGLIB_HEAP_ADD(elem_type, q->afield, elem, q->ifield, dim, comparator, elem_exchanger);\
+ }\
+ extern void sglib_##heap_type##_delete_first(heap_type *q) {\
+  SGLIB_HEAP_DELETE_FIRST(elem_type, q->afield, q->ifield, dim, comparator, elem_exchanger);\
+ }\
+ extern void sglib_##heap_type##_delete(heap_type *q) {\
+  SGLIB_HEAP_DELETE_FIRST(elem_type, q->afield, q->ifield, dim, comparator, elem_exchanger);\
+ }
+
+
+/* ------------------- hashed container (draft) (only for level 1) -------------------- */
+/* 
+  hashed container is a table of fixed size containing another (dynamic) container in
+  each cell. Once an object should be inserted into hashed container, the hash function
+  is used to determine the cell and then the object is inserted into the container
+  stored in this cell. Usually the container is simply a list or a sorted list, but it 
+  can be a red-black tree as well.
+  type - the type of the container stored in each cell.
+  dim  - the size of the hashed array
+  hash_function - the hashing function hashing 'type' to unsigned.
+*/
+
+#define SGLIB_DEFINE_HASHED_CONTAINER_PROTOTYPES(type, dim, hash_function) \
+  extern void sglib_hashed_##type##_init(type *table[dim]);\
+  extern void sglib_hashed_##type##_add(type *table[dim], type *elem);\
+  extern int sglib_hashed_##type##_add_if_not_member(type *table[dim], type *elem, type **member);\
+  extern void sglib_hashed_##type##_delete(type *table[dim], type *elem);\
+  extern int sglib_hashed_##type##_delete_if_member(type *table[dim], type *elem, type **memb);\
+  extern int sglib_hashed_##type##_is_member(type *table[dim], type *elem);\
+  extern type * sglib_hashed_##type##_find_member(type *table[dim], type *elem);
+
+#define SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS(type, dim, hash_function) \
+  /*extern unsigned hash_function(type *elem);*/\
+  void sglib_hashed_##type##_init(type *table[dim]) {\
+    unsigned i;\
+    for(i=0; i<(dim); i++) table[i] = NULL;\
+  }\
+  void sglib_hashed_##type##_add(type *table[dim], type *elem) {\
+    unsigned i;\
+    i = ((unsigned)hash_function(elem)) % (dim);\
+    sglib_##type##_add(&(table)[i], elem);\
+  }\
+  int sglib_hashed_##type##_add_if_not_member(type *table[dim], type *elem, type **member) {\
+    unsigned i;\
+    i = ((unsigned)hash_function(elem)) % (dim);\
+    return(sglib_##type##_add_if_not_member(&(table)[i], elem, member));\
+  }\
+  void sglib_hashed_##type##_delete(type *table[dim], type *elem) {\
+    unsigned i;\
+    i = ((unsigned)hash_function(elem)) % (dim);\
+    sglib_##type##_delete(&(table)[i], elem);\
+  }\
+  int sglib_hashed_##type##_delete_if_member(type *table[dim], type *elem, type **memb) {\
+    unsigned i;\
+    i = ((unsigned)hash_function(elem)) % (dim);\
+    return(sglib_##type##_delete_if_member(&(table)[i], elem, memb));\
+  }\
+  int sglib_hashed_##type##_is_member(type *table[dim], type *elem) {\
+    unsigned i;\
+    i = ((unsigned)hash_function(elem)) % (dim);\
+    return(sglib_##type##_is_member((table)[i], elem));\
+  }\
+  type * sglib_hashed_##type##_find_member(type *table[dim], type *elem) {\
+    unsigned i;\
+    i = ((unsigned)hash_function(elem)) % (dim);\
+    return(sglib_##type##_find_member((table)[i], elem));\
+  }
+
+
+
+/* ---------------------------------------------------------------------------- */
+/* ------------------------- DYNAMIC DATA STRUCTURES -------------------------- */
+/* ---------------------------------------------------------------------------- */
+
+
+
+/* ------------------------------------ list (level 1) -------------------------------- */
 
 #define SGLIB_DEFINE_LIST_PROTOTYPES(type, comparator, next) \
  extern void sglib_##type##_add(type **list, type *elem);\
@@ -752,7 +960,7 @@
    SGLIB_LIST_REVERSE(type, *list, next);\
  }
 
-/* ----------------------------- sorted list (level 1) ------------ */
+/* ----------------------------- sorted list (level 1) ----------------------------------- */
 
 
 #define SGLIB_DEFINE_SORTED_LIST_PROTOTYPES(type, comparator, next) \
@@ -801,7 +1009,7 @@
  }\
 
 
-/* ----------------------------- double linked list (level 1) ------------------ */
+/* ----------------------------- double linked list (level 1) ------------------------------ */
 
 
 #define SGLIB_DEFINE_DL_LIST_PROTOTYPES(type, comparator, previous, next) \
@@ -888,28 +1096,12 @@
  }
 
 
-/* ----------------------------- sorted double linked list (draft) (level 1) ------------ */
+/* TODO ----------------------------- sorted double linked list (level 1) --------------------- */
 
 
-#define SGLIB_DEFINE_SORTED_DL_LIST_PROTOTYPES(type, comparator, previous, next) \
- extern void sglib_##type##_add(type **list, type *elem);\
- extern void sglib_##type##_delete(type **list, type *elem);\
- extern void sglib_##type##_sort(type **list, type *elem);
+/* --------------------------------- red-black trees (level 1) -------------------------------- */
 
-
-#define SGLIB_DEFINE_SORTED_DL_LIST_FUNCTIONS(type, comparator, previous, next) \
- void sglib_##type##_add(type **list, type *elem) {\
-   SGLIB_SORTED_DL_LIST_ADD(type, *list, elem, comparator, previous, next);\
- }\
- void sglib_##type##_delete(type **list, type *elem) {\
-   SGLIB_DL_LIST_DELETE(type, *list, elem, previous, next);\
- }\
- void sglib_##type##_sort(type **list, type *elem) {\
-   SGLIB_DL_LIST_SORT(type, *list, comparator, previous, next);\
- }
-
-
-/* ---------------------------- red-black trees (level 1) ------------------------ 
+/*
 
 This implementation requires pointers to left and right sons (no
 parent pointer is needed) and one bit of additional information
@@ -1286,6 +1478,7 @@ void sglib___##type##_consistency_check(type *t) {\
 
 #define SGLIB_DEFINE_RBTREE_FUNCTIONS(type, left, right, colorbit, comparator, RED, BLACK) \
   SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL(type, left, right, colorbit, SGLIB___GET_VALUE, SGLIB___SET_VALUE, comparator, RED, BLACK)
+
 
 
 /* ---------------------------------------------------------------------------- */

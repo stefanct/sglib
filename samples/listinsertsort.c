@@ -20,7 +20,7 @@ struct ilist {
 
 int main(int argc, char **argv) {
   int i,a;
-  struct ilist *l, *the_list;
+  struct ilist *l, *the_list, *ll;
   the_list = NULL;
   for (i=1; i<argc; i++) {
 	sscanf(argv[i],"%d", &a);
@@ -29,8 +29,8 @@ int main(int argc, char **argv) {
 	// insert the new element into the list while keeping it sorted
 	SGLIB_SORTED_LIST_ADD(struct ilist, the_list, l, ILIST_COMPARATOR, next_ptr);
   }
-  SGLIB_LIST_MAP_ON_ELEMENTS(struct ilist, the_list, next_ptr, {
-	printf("%d ", _current_element_->i);
+  SGLIB_LIST_MAP_ON_ELEMENTS(struct ilist, the_list, ll, next_ptr, {
+	printf("%d ", ll->i);
   });
   printf("\n");
   return(0);

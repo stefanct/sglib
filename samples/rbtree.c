@@ -25,7 +25,7 @@ SGLIB_DEFINE_RBTREE_FUNCTIONS(rbtree, left, right, color_field, CMPARATOR, 0, 1)
 
 int main(int argc, char **argv) {
   int i,a;
-  struct rbtree e, *t, *the_tree;
+  struct rbtree e, *t, *the_tree, *te;
   the_tree = NULL;
   for (i=1; i<argc; i++) {
 	sscanf(argv[i],"%d", &a);
@@ -36,8 +36,8 @@ int main(int argc, char **argv) {
 	  sglib_rbtree_add(&the_tree, t);
 	}
   }
-  SGLIB_BIN_TREE_MAP_ON_ELEMENTS(struct rbtree, the_tree, left, right, {
-	printf("%d ", _current_element_->n);
+  SGLIB_BIN_TREE_MAP_ON_ELEMENTS(struct rbtree, the_tree, te, left, right, {
+	printf("%d ", te->n);
   });
   printf("\n");
   return(0);

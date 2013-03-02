@@ -31,6 +31,7 @@
 <li><a href="#api1">Application Interface - level 1</a>
 <ul>
 <li><a href="#array_api1">Arrays</a>
+<li><a href="#hashed_container_api1">Hashed Container</a>
 <li><a href="#list_api1">Linked Lists</a>
 <li><a href="#sorted_list_api1">Sorted Linked Lists</a>
 <li><a href="#dl_list_api1">Double Linked Lists</a>
@@ -39,6 +40,7 @@
 <li><a href="#examples">Examples</a>
 <ul>
 <li><a href="#array_exam">Arrays</a>
+<li><a href="#hashed_container_exam">Hashed Container</a>
 <li><a href="#list_exam">Linked Lists</a>
 <li><a href="#sorted_list_exam">Sorted Linked Lists</a>
 <li><a href="#dl_list_exam">Double Linked Lists</a>
@@ -832,7 +834,7 @@ echo '
 <code><b>SGLIB_LIST_MAP_ON_ELEMENTS</b></code>
 </td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
 </td><td VALIGN="top" WIDTH="70%">
-<code><b>SGLIB_LIST_MAP_ON_ELEMENTS(type, list, next, command)</b></code>
+<code><b>SGLIB_LIST_MAP_ON_ELEMENTS(type, list, var, next, command)</b></code>
 <br>
 <br>
 apply a command on all elements of a list.
@@ -842,11 +844,11 @@ apply a command on all elements of a list.
 echo "${sglib_list_type_parameter}"
 echo '
 <dd><code>list</code> - the list.
+<dd><code>var</code> - the variable which will run through each element of the list.
 '
 echo "${sglib_list_next_parameter}"
 echo '
-<dd><code>command</code> - any (possibly composed) statement of the C language. In the statement you can use the variable <code>_current_element_</code> going through all 
-elements of the list.
+<dd><code>command</code> - any (possibly composed) statement of the C language. In the statement you can use the variable <code>var</code> (third parameter of the macro) going through all elements of the list.
 '
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
 </dd>
@@ -1106,7 +1108,7 @@ echo '
 <code><b>SGLIB_SORTED_LIST_MAP_ON_ELEMENTS</b></code>
 </td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
 </td><td VALIGN="top" WIDTH="70%">
-<code><b>SGLIB_SORTED_LIST_MAP_ON_ELEMENTS(type, list, next, command)</b></code>
+<code><b>SGLIB_SORTED_LIST_MAP_ON_ELEMENTS(type, list, var, next, command)</b></code>
 <br>
 <br>
 apply a command on all elements of a list.
@@ -1116,11 +1118,11 @@ apply a command on all elements of a list.
 echo "${sglib_list_type_parameter}"
 echo '
 <dd><code>list</code> - the list.
+<dd><code>var</code> - the variable which will run through each element of the list.
 '
 echo "${sglib_list_next_parameter}"
 echo '
-<dd><code>command</code> - any (possibly composed) statement of the C language. In the statement you can use the variable <code>_current_element_</code> going through all 
-elements of the list.
+<dd><code>command</code> - any (possibly composed) statement of the C language. In the statement you can use the variable <code>var</code> (third parameter of the macro) going through all elements of the list.
 '
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
 </dd>
@@ -1490,20 +1492,22 @@ echo '
 <code><b>SGLIB_DL_LIST_MAP_ON_ELEMENTS</b></code>
 </td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
 </td><td VALIGN="top" WIDTH="70%">
-<code><b>SGLIB_DL_LIST_MAP_ON_ELEMENTS(type, list, previous, next, command)</b></code>
+<code><b>SGLIB_DL_LIST_MAP_ON_ELEMENTS(type, list, var, previous, next, command)</b></code>
 <br>
 <br>
-apply a command on all elements of a list. <code>Command</code> can refer a variable <code>_current_element_</code> going through all elements of the list accessible via the <code>previous</code> field and then via the <code>next</code> field.
+apply a command on all elements of a list. <code>Command</code> will be repeatedly executed for each element of the list accessible via the <code>previous</code> field and then via the <code>next</code> field. The current element of the list is stored in the
+variable <code>var</code>.
 <dd><dl>
 <dt><b>Parameters:</b>
 #SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
 echo "${sglib_dl_list_type_parameter}"
 echo '
 <dd><code>list</code> - the list.
+<dd><code>var</code> - the variable which will run through each element of the list.
 '
 echo "${sglib_dl_list_previous_next_parameter}"
 echo '
-<dd><code>command</code> - any (possibly composed) statement of the C language. In the statement you can use the variable <code>_current_element_</code> going through all 
+<dd><code>command</code> - any (possibly composed) statement of the C language. In the statement you can use the variable <code>var</code> (third parameter of the macro) going through all 
 elements of the list.
 '
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
@@ -1573,10 +1577,10 @@ echo "${sglib_dl_list_comparator_next_parameters}"
 <code><b>SGLIB_BIN_TREE_MAP_ON_ELEMENTS</b></code>
 </td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
 </td><td VALIGN="top" WIDTH="70%">
-<code><b>SGLIB_BIN_TREE_MAP_ON_ELEMENTS(type, tree, left, right, command)</b></code>
+<code><b>SGLIB_BIN_TREE_MAP_ON_ELEMENTS(type, tree, var, left, right, command)</b></code>
 <br>
 <br>
-traverse a binary tree and apply command on each element. This is non-recursive implementation of tree traversal. It maintains the path to the current node in the array <code>_path_</code>, the <code>_path_[0]</code> contains the root of the tree. The <code>_path_[_pathi_-1]</code> contains the parent of <code>_current_element_</code>. The maximal deep of the tree is limited by <code>SGLIB_MAX_TREE_DEEP</code> macro.
+traverse a binary tree and apply command on each element. This is non-recursive implementation of tree traversal. It maintains the path to the current node in the array <code>_path_</code>, the <code>_path_[0]</code> contains the root of the tree. The <code>_path_[_pathi_-1]</code> contains the parent of the <code>var</code>. The maximal deep of the tree is limited by <code>SGLIB_MAX_TREE_DEEP</code> macro.
 
 <dd><dl>
 <dt><b>Parameters:</b>
@@ -1590,10 +1594,11 @@ echo '
 '
 echo '
 <dd><code>tree</code> - the tree.
+<dd><code>var</code> - the variable which will run through each element of the tree.
 '
 echo "${sglib_tree_left_right_parameters}"
 echo '
-<dd><code>command</code> - any (possibly composed) statement of the C language. In the statement you can use the variable <code>_current_element_</code> going through all 
+<dd><code>command</code> - any (possibly composed) statement of the C language. In the statement you can use the variable <code>var</code> (third parameter of the macro) going through all 
 elements of the tree.
 '
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
@@ -1636,6 +1641,11 @@ are composed from the name of the base type given by the user.
 
 
 
+
+
+
+
+
 #SPARSE_SHELL_SCRIPT_EXECUTE
 ######################################################################################################################
 ################################                  ARRAYS API LEVEL 1            ######################################
@@ -1644,7 +1654,9 @@ are composed from the name of the base type given by the user.
 
 
 
-<br><br>
+<br><br><br><br><br><br>
+<br><br><br><br><br><br>
+
 
 <a name="array_api1"></a>
 
@@ -1776,12 +1788,382 @@ echo "${sglib_define_array_sorting_functions_parameters}"
 
 
 
+
+
+#SPARSE_SHELL_SCRIPT_EXECUTE
+######################################################################################################################
+################################             HASHED CONTAINER API LEVEL 1            #################################
+######################################################################################################################
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+
+
+
+<br><br><br><br><br><br>
+<br><br><br><br><br><br>
+
+<a name="hashed_container_api1"></a>
+
+
+<h2>Hashed Containers API: level 1</h2>
+
+
+Usually, in libraries similar to sglib, a hashed container is an array
+where each cell contains a (possibly empty) list of elements.
+
+
+In sglib we use a more abstract notion of hashed container.  A hashed
+container is a table of fixed size containing another (we say
+<em>base</em>) container in each cell. Once an object is going to be
+inserted into the hashed container, the hash function is used to
+determine the cell where it belongs and then the object is inserted
+into the base container stored in this cell. The base container is
+usualy a list, however it can be a sorted list, double linked list or
+a red-black tree as well. Sglib's hashed container is parametrized by
+the name of the base container.
+
+<p>
+Hashed containers are provided only in level-1 interface because they
+require a uniform interface for operations applied on the base container.
+
+<br> <br> <br>
+
+<table border=3 CELLPADDING="10" CELLSPACING="0">
+
+<tr><td width=90%>
+
+<table border=1 CELLPADDING="10" CELLSPACING="0">
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DEFINE_HASHED_CONTAINER_PROTOTYPES</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<code><b>SGLIB_DEFINE_HASHED_CONTAINER_PROTOTYPES(type, dim, hash_function)</b></code>
+<br>
+<br>
+define headers of hashed container functions. 
+Declared functions are:
+<br>
+<a href="#sglib_hashed_type_init">sglib_hashed_<font  face="Arial" color="909090">type</font>_init</a> 
+<br>
+<a href="#sglib_hashed_type_add">sglib_hashed_<font  face="Arial" color="909090">type</font>_add</a> 
+<br>
+<a href="#sglib_hashed_type_add_if_not_member">sglib_hashed_<font  face="Arial" color="909090">type</font>_add_if_not_member</a> 
+<br>
+<a href="#sglib_hashed_type_delete">sglib_hashed_<font  face="Arial" color="909090">type</font>_delete</a> 
+<br>
+<a href="#sglib_hashed_type_delete_if_member">sglib_hashed_<font  face="Arial" color="909090">type</font>_delete_if_member</a> 
+<br>
+<a href="#sglib_hashed_type_is_member">sglib_hashed_<font  face="Arial" color="909090">type</font>_is_member</a> 
+<br>
+<a href="#sglib_hashed_type_find_member">sglib_hashed_<font  face="Arial" color="909090">type</font>_find_member</a> 
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+sglib_define_hashed_container_functions_parameters='
+<dd><code>type</code> - the type of the base container. It <b>must</b> be a single identifier.
+<dd><code>dim</code> - the size of the array.
+<dd><code>hash_function</code> - the hashing function mapping elements into unsigned integers.
+'
+echo "${sglib_define_hashed_container_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>macro</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS"></a>
+<code><b>SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS(type, dim, hash_function)</b></code>
+<br>
+<br>
+define the hashed container functions.
+Defined functions are:
+<br>
+<a href="#sglib_hashed_type_init">sglib_hashed_<font  face="Arial" color="909090">type</font>_init</a> 
+<br>
+<a href="#sglib_hashed_type_add">sglib_hashed_<font  face="Arial" color="909090">type</font>_add</a> 
+<br>
+<a href="#sglib_hashed_type_add_if_not_member">sglib_hashed_<font  face="Arial" color="909090">type</font>_add_if_not_member</a> 
+<br>
+<a href="#sglib_hashed_type_delete">sglib_hashed_<font  face="Arial" color="909090">type</font>_delete</a> 
+<br>
+<a href="#sglib_hashed_type_delete_if_member">sglib_hashed_<font  face="Arial" color="909090">type</font>_delete_if_member</a> 
+<br>
+<a href="#sglib_hashed_type_"is_member>sglib_hashed_<font  face="Arial" color="909090">type</font>_is_member</a> 
+<br>
+<a href="#sglib_hashed_type_find_member">sglib_hashed_<font  face="Arial" color="909090">type</font>_find_member</a> 
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_hashed_container_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dd>
+</td></tr>
+
+</table>
+
+<br>
+<h4>Functions generated by above macros:</b4>
+<br>
+<br>
+
+<table border=1 CELLPADDING="10" CELLSPACING="1">
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_hashed_<font face="Arial" color="909090">type</font>_init</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_hashed_type_init"></a>
+<code><b>void sglib_hashed_<font  face="Arial" color="909090">type</font>_init(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>])</b></code>
+<br>
+<br>
+set each cell in the table to NULL.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+sglib_hashed_container_table_parameter='
+<dd><code>table</code> - the hashed container.
+'
+echo "${sglib_hashed_container_table_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS"><b>SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_hashed_container_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_hashed_<font face="Arial" color="909090">type</font>_add</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_hashed_type_add"></a>
+<code><b>void sglib_hashed_<font  face="Arial" color="909090">type</font>_add(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem</b>)</code>
+<br>
+<br>
+Add an element into the hashed container.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_hashed_container_table_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><code>elem</code> - the element to be added.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS"><b>SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_hashed_container_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_hashed_<font face="Arial" color="909090">type</font>_add_if_not_member</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_hashed_type_add_if_not_member"></a>
+<code><b>int sglib_hashed_<font  face="Arial" color="909090">type</font>_add_if_not_member(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem, <font  face="Arial" color="909090">type</font> **member)</b></code>
+<br>
+<br>
+Add an element into the hashed container if there is no <a href="#comparator_equality">comparator equal</a> element inside.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_hashed_container_table_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><code>elem</code> - the element to be added.
+<dd><code>member</code> - in case if the element is a member of the container, set <code>*member</code> to it.
+</dt>
+<dt><b>Returns:</b>
+<dd>Non-zero if the element was inserted to the container. Zero otherwise.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS"><b>SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_hashed_container_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_hashed_<font face="Arial" color="909090">type</font>_delete</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_hashed_type_delete"></a>
+<code><b>void sglib_hashed_<font  face="Arial" color="909090">type</font>_delete(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem</b>)</code>
+<br>
+<br>
+delete an element from a hashed container. The element must be a <a href="#pointer_equality">pointer equal</a> member of the hashed container.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_hashed_container_table_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><code>elem</code> - the element to be removed.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS"><b>SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_hashed_container_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_hashed_<font face="Arial" color="909090">type</font>_delete_if_member</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_hashed_type_delete_if_member"></a>
+<code><b>int sglib_hashed_<font  face="Arial" color="909090">type</font>_delete_if_member(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem, <font  face="Arial" color="909090">type</font> **member)</b></code>
+<br>
+<br>
+find a <a href="#comparator_equality">comparator equal</a> element in the hashed container and remove it.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_hashed_container_table_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><code>elem</code> - the element to be removed.
+<dd><code>member</code> - in case if the element is a member of the list, set <code>*member</code> to the removed element.
+</dt>
+<dt><b>Returns:</b>
+<dd>Non-zero if the element was removed from the container. Zero otherwise.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS"><b>SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_hashed_container_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_hashed_<font face="Arial" color="909090">type</font>_is_member</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_hashed_type_is_member"></a>
+<code><b>int sglib_hashed_<font  face="Arial" color="909090">type</font>_is_member(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem</b>)</code>
+<br>
+<br>
+determine whether an element is inside a hashed container. The element is searched using <a href="#comparator_equality">pointer equality</a>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_hashed_container_table_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><code>elem</code> - the element to be searched.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS"><b>SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_hashed_container_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+
+
+
+
+
+<tr><td VALIGN="top" WIDTH="1%">
+<code><b>sglib_hashed_<font face="Arial" color="909090">type</font>_find_member</b></code>
+</td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
+</td><td VALIGN="top" WIDTH="70%">
+<a name="sglib_hashed_type_find_member"></a>
+<code><b><font  face="Arial" color="909090">type</font> *sglib_hashed_<font  face="Arial" color="909090">type</font>_find_member(<font  face="Arial" color="909090">type</font> *table[<font  face="Arial" color="909090">dim</font>], <font  face="Arial" color="909090">type</font> *elem</b>)</code>
+<br>
+<br>
+find an element in the hashed container. The element is searched using <a href="#comparator_equality">comparator equality</a>.
+<dd><dl>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_hashed_container_table_parameter}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<dd><code>elem</code> - the element to be searched.
+</dt>
+<dt><b>Returns:</b>
+<dd>The member of the container <a href="#comparator_equality">comparator equal</a> to <code>elem</code>.
+</dt>
+<hr size=1 width=70%>
+<font  face="Arial" size=-1 color="909090">
+<dt>Generated by <a href="#SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS"><b>SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS</b></a>
+<dt><b>Parameters:</b>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+echo "${sglib_define_hashed_container_functions_parameters}"
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+</dt>
+</font>
+</td></tr>
+
+
+</table>
+
+</td></tr>
+</table>
+
+
+
+
+
+
+
+
+
 #SPARSE_SHELL_SCRIPT_EXECUTE
 ###############################################################################################################
 ################################             LISTS API LEVEL 1           ######################################
 ###############################################################################################################
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
 
+
+<br><br><br><br><br><br>
+<br><br><br><br><br><br>
 
 <a name="list_api1"></a>
 
@@ -1896,7 +2278,7 @@ echo "${sglib_define_list_functions_parameters}"
 </td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="sglib_list_type_add_if_not_member"></a>
-<code><b>int sglib_<font  face="Arial" color="909090">type</font>_add_if_not_member(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem)</b></code>
+<code><b>int sglib_<font  face="Arial" color="909090">type</font>_add_if_not_member(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem, <font  face="Arial" color="909090">type</font> **member)</b></code>
 <br>
 <br>
 insert an element if there is no <a href="#comparator_equality">comparator equal</a> element in the list.
@@ -1906,6 +2288,7 @@ insert an element if there is no <a href="#comparator_equality">comparator equal
 echo "${sglib_list_functions_list_parameter}"
 echo '
 <dd><code>elem</code> - the element to insert.
+<dd><code>member</code> - in case if the element is a member of the list, set <code>*member</code> to it.
 '
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
 </dt>
@@ -2313,7 +2696,7 @@ echo "${sglib_define_sorted_list_functions_parameters}"
 </td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="sglib_sorted_list_type_add_if_not_member"></a>
-<code><b>int sglib_<font  face="Arial" color="909090">type</font>_add_if_not_member(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem)</b></code>
+<code><b>int sglib_<font  face="Arial" color="909090">type</font>_add_if_not_member(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem, <font  face="Arial" color="909090">type</font> **member)</b></code>
 <br>
 <br>
 insert an element if there is no <a href="#comparator_equality">comparator equal</a> element in the list.
@@ -2323,6 +2706,7 @@ insert an element if there is no <a href="#comparator_equality">comparator equal
 echo "${sglib_sorted_list_functions_list_parameter}"
 echo '
 <dd><code>elem</code> - the element to insert.
+<dd><code>member</code> - in case if the element is a member of the list, set <code>*member</code> to it.
 '
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
 </dt>
@@ -2738,7 +3122,7 @@ echo "${sglib_define_dl_list_functions_parameters}"
 </td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="sglib_dl_list_type_add_if_not_member"></a>
-<code><b>int sglib_<font  face="Arial" color="909090">type</font>_add_if_not_member(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem)</b></code>
+<code><b>int sglib_<font  face="Arial" color="909090">type</font>_add_if_not_member(<font  face="Arial" color="909090">type</font> **list, <font  face="Arial" color="909090">type</font> *elem, <font  face="Arial" color="909090">type</font> **member)</b></code>
 <br>
 <br>
 insert an element if there is no <a href="#comparator_equality">comparator equal</a> element in the list.
@@ -2748,6 +3132,7 @@ insert an element if there is no <a href="#comparator_equality">comparator equal
 echo "${sglib_dl_list_functions_list_parameter}"
 echo '
 <dd><code>elem</code> - the element to insert.
+<dd><code>member</code> - in case if the element is a member of the list, set <code>*member</code> to it.
 '
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
 </dt>
@@ -3299,7 +3684,7 @@ echo "${sglib_define_rbtree_functions_parameters}"
 </td><td VALIGN="top" WIDTH="1%"><i>function</i></b>
 </td><td VALIGN="top" WIDTH="70%">
 <a name="sglib_rbtree_type_add_if_not_member"></a>
-<code><b>int sglib_<font  face="Arial" color="909090">type</font>_add_if_not_member(<font  face="Arial" color="909090">type</font> **tree, <font  face="Arial" color="909090">type</font> *elem)</b></code>
+<code><b>int sglib_<font  face="Arial" color="909090">type</font>_add_if_not_member(<font  face="Arial" color="909090">type</font> **tree, <font  face="Arial" color="909090">type</font> *elem, <font  face="Arial" color="909090">type</font> **member)</b></code>
 <br>
 <br>
 insert an element if there is no <a href="#comparator_equality">comparator equal</a> element in the tree.
@@ -3309,6 +3694,7 @@ insert an element if there is no <a href="#comparator_equality">comparator equal
 echo "${sglib_rbtree_functions_tree_parameter}"
 echo '
 <dd><code>elem</code> - the element to insert.
+<dd><code>member</code> - in case if the element is a member of the tree, set <code>*member</code> to it.
 '
 #SPARSE_SHELL_SCRIPT_EXECUTE_END
 </dt>
@@ -3566,6 +3952,32 @@ sed -e "s/</\\\&lt;/g" ../samples/arraybinsearch.c
 
 </center>
 
+
+#SPARSE_SHELL_SCRIPT_EXECUTE
+######################################################################################################################
+################################              HASHED CONTAINER SAMPLES                ################################
+######################################################################################################################
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+
+
+<a name="hashed_container_exam"></a>
+
+<br><br>
+<h2>Hashed Container Sample</h2>
+
+<center>
+
+<table width=90% border=1 CELLPADDING="10" CELLSPACING="1">
+<tr><td>
+<pre>
+#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT
+sed -e "s/</\\\&lt;/g" ../samples/hash.c
+#SPARSE_SHELL_SCRIPT_EXECUTE_END
+<pre>
+</td></tr>
+</table>
+
+</center>
 
 #SPARSE_SHELL_SCRIPT_EXECUTE
 ######################################################################################################################

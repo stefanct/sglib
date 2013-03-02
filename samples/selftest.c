@@ -36,6 +36,8 @@ typedef struct MyIntList ReverseSortedList;
 typedef struct MyIntList SimpleList;
 typedef struct MyIntList Tree;
 
+#define HASH_TAB_DIM 100
+
 #define ARRAY_CORRESPONDENCE_FUN(val) (((val)<<2) ^ (val)>>1)
 
 #define MY_REVERSE_LIST_CMP(e1, e2) ((e2)->n - (e1)->n)
@@ -46,6 +48,10 @@ typedef struct MyIntList Tree;
 
 int myListCmp(struct MyIntList *e1, struct MyIntList *e2) {
   return(e1->n - e2->n);
+}
+
+unsigned slistHashFunction(struct MyIntList *e) {
+  return((unsigned) e->n);
 }
 
 typedef int rint;
@@ -61,6 +67,8 @@ SGLIB_DEFINE_SORTED_LIST_PROTOTYPES(ReverseSortedList, MY_REVERSE_LIST_CMP, next
 SGLIB_DEFINE_SORTED_LIST_FUNCTIONS(ReverseSortedList, MY_REVERSE_LIST_CMP, next);
 SGLIB_DEFINE_RBTREE_PROTOTYPES(Tree, left_ptr, right_ptr, color, myListCmp, 0, 1);
 SGLIB_DEFINE_RBTREE_FUNCTIONS(Tree, left_ptr, right_ptr, color, myListCmp, 0, 1);
+SGLIB_DEFINE_HASHED_CONTAINER_PROTOTYPES(SimpleList, HASH_TAB_DIM, slistHashFunction);
+SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS(SimpleList, HASH_TAB_DIM, slistHashFunction);
 
 
 void generate_values() {
@@ -84,6 +92,17 @@ void compute_orders_for_list(struct MyIntList *list, int *counts) {
 	for(l=list; l!=NULL; l=l->next) {
 		counts[l->n] ++;
 	}
+}
+
+void compute_orders_for_hashed_list(struct MyIntList *htab[], int *counts) {
+  struct MyIntList *l;
+  int i;
+  memset(counts, 0, ORDER*sizeof(int));
+  for(i=0; i<HASH_TAB_DIM; i++) {
+	for(l=htab[i]; l!=NULL; l=l->next) {
+	  counts[l->n] ++;
+	}
+  }
 }
 
 void compare_counts(int *counts, int *check_counts) {
@@ -122,9 +141,21 @@ void check_int_list_values(struct MyIntList *list) {
 	compare_counts(counts, check_counts);
 }
 
+void check_hashed_list_values(struct MyIntList *htab[]) {
+	compute_orders_for_array(val, counts, ORDER);
+	compute_orders_for_hashed_list(htab, check_counts);
+	compare_counts(counts, check_counts);
+}
+
 void check_int_unique_list_values(struct MyIntList *list) {
 	compute_orders_for_array(val, counts, ORDER);
 	compute_orders_for_list(list, check_counts);
+	compare_unique_counts(counts, check_counts);
+}
+
+void check_int_unique_hashed_list_values(struct MyIntList *htab[]) {
+	compute_orders_for_array(val, counts, ORDER);
+	compute_orders_for_hashed_list(htab, check_counts);
 	compare_unique_counts(counts, check_counts);
 }
 
@@ -297,7 +328,7 @@ void list_test() {
 	int i, len;
 	int a[ORDER];
 	int b[ORDER];
-	struct MyIntList	*list, *list2, *l, *t, *e, *e2, te, *memb, *memb2;
+	struct MyIntList	*list, *list2, *l, *t, *e, *e2, te, *memb, *memb2, *_current_element_;
 
 	//srandom(seed);
 	generate_values();
@@ -325,7 +356,7 @@ void list_test() {
 	check_list_equality(list, list2);
 
 
-	SGLIB_LIST_MAP_ON_ELEMENTS(SimpleList, list2, next, {
+	SGLIB_LIST_MAP_ON_ELEMENTS(SimpleList, list2, _current_element_, next, {
 	  free(_current_element_);
 	});
 
@@ -340,7 +371,7 @@ void list_test() {
 		assert(sglib_SimpleList_find_member(list, &te) == NULL);
 	}
 
-	SGLIB_LIST_MAP_ON_ELEMENTS(SimpleList, list, next, {
+	SGLIB_LIST_MAP_ON_ELEMENTS(SimpleList, list, _current_element_, next, {
 	  assert(sglib_SimpleList_is_member(list, _current_element_));
 	});
 	assert( ! sglib_SimpleList_is_member(list, &te));
@@ -401,12 +432,87 @@ void list_test() {
 	check_that_int_list_is_reverse_sorted(list);
 
 	list2 = NULL;
-	SGLIB_LIST_MAP_ON_ELEMENTS(SimpleList, list, next, {
+	SGLIB_LIST_MAP_ON_ELEMENTS(SimpleList, list, _current_element_, next, {
 		e = malloc(sizeof(struct MyIntList));
 		e->n = _current_element_->n;
 		sglib_SimpleList_add(&list2, e);	  
 	});
 
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////  HASHED_LIST TEST   ///////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+
+void hashed_list_test() {
+	int i, len;
+	int a[ORDER];
+	int b[ORDER];
+	struct MyIntList *htab[HASH_TAB_DIM];
+	struct MyIntList te,*e, *memb, *memb2;
+
+	//srandom(seed);
+	generate_values();
+
+	sglib_hashed_SimpleList_init(htab);
+
+	for(i=0; i<ORDER; i++) {
+		a[i] = val[i];
+		b[i] = i;
+		e = malloc(sizeof(struct MyIntList));
+		e->n = val[i];
+		sglib_hashed_SimpleList_add(htab, e);
+	}
+
+	check_hashed_list_values(htab);
+
+	SGLIB_ARRAY_QUICK_SORT(int, a, ORDER, SGLIB_NUMERIC_COMPARATOR, MY_AB_EXCHANGER);
+	// checkin is_member
+	for(i=0; i<ORDER; i++) {
+		te.n = val[i];
+		memb = sglib_hashed_SimpleList_find_member(htab, &te);
+		assert(memb != NULL);
+		assert(sglib_hashed_SimpleList_is_member(htab, memb) != 0);
+		te.n = -val[i]-1;
+		assert(sglib_hashed_SimpleList_find_member(htab, &te) == NULL);
+		assert(sglib_hashed_SimpleList_is_member(htab, &te) == 0);
+	}
+
+	for(i=0; i<ORDER; i++) {
+		te.n = a[b[i]];
+		memb = sglib_hashed_SimpleList_find_member(htab, &te);
+		assert(memb!=NULL);
+		sglib_hashed_SimpleList_delete(htab, memb);
+		free(memb);
+		//&fprintf(stderr,"del(%d)  ", a[b[i]]);
+		//&for(l=htab; l!=NULL; l=l->next) fprintf(stderr,"%d ", l->n); fprintf(stderr,"\n");
+	}
+
+
+	for(i=0; i<ORDER; i++) {
+		e = malloc(sizeof(struct MyIntList));
+		e->n = val[i];
+		if (! sglib_hashed_SimpleList_add_if_not_member(htab, e, &memb2)) free(e);
+	}
+
+	//&for(l=hashed_list; l!=NULL; l=l->next) fprintf(stderr,"%d ", l->n); fprintf(stderr,"\n");
+
+	check_int_unique_hashed_list_values(htab);
+
+	// checkin is_member
+	for(i=0; i<ORDER; i++) {
+		te.n = val[i];
+		assert(sglib_hashed_SimpleList_find_member(htab, &te)!=NULL);
+	}
+
+	for(i=0; i<ORDER; i++) {
+		te.n = a[b[i]];
+		memb = sglib_hashed_SimpleList_find_member(htab, &te);
+		sglib_hashed_SimpleList_delete_if_member(htab, &te, &memb2);
+		assert(memb == memb2);
+		if (memb!=NULL) free(memb);
+	}
 }
 
 
@@ -418,7 +524,8 @@ void double_linked_list_test() {
 	int i, len;
 	int a[ORDER];
 	int b[ORDER];
-	struct MyIntList	*list, *list2, *list3, *list4, *l, *l2, *l3, *l4, *t, *e, *e2, te, *memb, *memb2;
+	struct MyIntList	*list, *list2, *list3, *list4, *l, *l2, *l3, *l4, *t, *e, *e2, te, *memb, *memb2, *_current_element_;
+
 
 	//srandom(seed);
 	generate_values();
@@ -473,7 +580,7 @@ void double_linked_list_test() {
 	check_list_equality(l, l4);
 
 
-	SGLIB_DL_LIST_MAP_ON_ELEMENTS(DoubleLinkedList, list2, previous, next, {
+	SGLIB_DL_LIST_MAP_ON_ELEMENTS(DoubleLinkedList, list2, _current_element_, previous, next, {
 	  free(_current_element_);
 	});
 
@@ -488,7 +595,7 @@ void double_linked_list_test() {
 		assert(sglib_DoubleLinkedList_find_member(list, &te) == NULL);
 	}
 
-	SGLIB_DL_LIST_MAP_ON_ELEMENTS(DoubleLinkedList, list, previous, next, {
+	SGLIB_DL_LIST_MAP_ON_ELEMENTS(DoubleLinkedList, list, _current_element_, previous, next, {
 	  assert(sglib_DoubleLinkedList_is_member(list, _current_element_));
 	});
 	assert( ! sglib_DoubleLinkedList_is_member(list, &te));
@@ -583,7 +690,7 @@ void double_linked_list_test() {
 	check_that_int_list_is_reverse_sorted(l);
 
 	list2 = NULL;
-	SGLIB_LIST_MAP_ON_ELEMENTS(DoubleLinkedList, list, next, {
+	SGLIB_LIST_MAP_ON_ELEMENTS(DoubleLinkedList, list, _current_element_, next, {
 		e = malloc(sizeof(struct MyIntList));
 		e->n = _current_element_->n;
 		sglib_DoubleLinkedList_add(&list2, e);
@@ -602,6 +709,7 @@ void sorted_list_test() {
 	int a[ORDER];
 	int b[ORDER];
 	struct MyIntList	*list, *l, *e, te, *memb, *memb2;
+	SimpleList *el;
 
 	//srandom(seed);
 	generate_values();
@@ -631,8 +739,8 @@ void sorted_list_test() {
 		assert(sglib_SortedList_find_member(list, &te)==NULL);
 	}
 
-	SGLIB_LIST_MAP_ON_ELEMENTS(SimpleList, list, next, {
-	  assert(sglib_SortedList_is_member(list, _current_element_));
+	SGLIB_LIST_MAP_ON_ELEMENTS(SimpleList, list, el, next, {
+	  assert(sglib_SortedList_is_member(list, el));
 	});
 	assert( ! sglib_SortedList_is_member(list, &te));
 
@@ -717,7 +825,7 @@ void rbtree_test() {
   int			i;
   int a[ORDER];
   int b[ORDER];
-  Tree			*tree, *e, te, *memb, *memb2;
+  Tree			*tree, *e, te, *memb, *memb2, *me;
   SimpleList	*list, *l;
   //srandom(seed);
   generate_values();
@@ -728,20 +836,20 @@ void rbtree_test() {
 	e = malloc(sizeof(Tree));
 	e->n = val[i];
 	sglib_Tree_add(&tree, e);
-	//&SGLIB_BIN_TREE_MAP_ON_ELEMENTS(Tree, tree, left_ptr, right_ptr, {fprintf(stderr,"%d ", _current_element_->n);});fprintf(stderr,"\n");
+	//&SGLIB_BIN_TREE_MAP_ON_ELEMENTS(Tree, tree, me, left_ptr, right_ptr, {fprintf(stderr,"%d ", me->n);});fprintf(stderr,"\n");
 	sglib___Tree_consistency_check(tree);
   }
 
-  SGLIB_BIN_TREE_MAP_ON_ELEMENTS(Tree, tree, left_ptr, right_ptr, {
-	assert(sglib_Tree_is_member(tree, _current_element_));
+  SGLIB_BIN_TREE_MAP_ON_ELEMENTS(Tree, tree, me, left_ptr, right_ptr, {
+	assert(sglib_Tree_is_member(tree, me));
   });
   te.n = val[0];
   assert(! sglib_Tree_is_member(tree, &te));
 
   // create a list of tree elements
   list = NULL;
-  SGLIB_BIN_TREE_MAP_ON_ELEMENTS(Tree, tree, left_ptr, right_ptr, {
-	sglib_SimpleList_add(&list, _current_element_);
+  SGLIB_BIN_TREE_MAP_ON_ELEMENTS(Tree, tree, me, left_ptr, right_ptr, {
+	sglib_SimpleList_add(&list, me);
   });
 
   check_int_list_values(list);
@@ -774,14 +882,14 @@ void rbtree_test() {
 	e->n = val[i];
 	//sglib_Tree_add(&tree, e);
 	sglib_Tree_add_if_not_member(&tree, e, &memb2);
-	//&SGLIB_BIN_TREE_MAP_ON_ELEMENTS(Tree, tree, left_ptr, right_ptr, {fprintf(stderr,"%d ", _current_element_->n);});fprintf(stderr,"\n");
+	//&SGLIB_BIN_TREE_MAP_ON_ELEMENTS(Tree, tree, me, left_ptr, right_ptr, {fprintf(stderr,"%d ", me->n);});fprintf(stderr,"\n");
 	sglib___Tree_consistency_check(tree);
   }
 
   // create a list of tree elements
   list = NULL;
-  SGLIB_BIN_TREE_MAP_ON_ELEMENTS(Tree, tree, left_ptr, right_ptr, {
-	sglib_SimpleList_add(&list, _current_element_);
+  SGLIB_BIN_TREE_MAP_ON_ELEMENTS(Tree, tree, me, left_ptr, right_ptr, {
+	sglib_SimpleList_add(&list, me);
   });
 
   check_int_unique_list_values(list);
@@ -819,6 +927,7 @@ int main() {
 		array_heap_sort_test();
 		list_sort_test();
 		list_test();
+		hashed_list_test();
 		double_linked_list_test();
 		sorted_list_test();
 		rbtree_test();
