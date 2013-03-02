@@ -1,1 +1,2 @@
-sh sssi index.html.sss index.html
+#!/bin/sh
+./sssi index.html.sss index.html

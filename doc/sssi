@@ -3,15 +3,15 @@
 # usage: sssi <input file> <output file>
 #
 readSssCommand() {
-	rm -f ${tmp}
+	echo -n  > "${tmp}"
 	while read line
-	  do
-	  if test "X${line}" = "X#SPARSE_SHELL_SCRIPT_EXECUTE_END"
-		  then
-		  break
-	  else
-		  echo ${line} >> ${tmp}
-	  fi
+	do
+		if test "X${line}" = "X#SPARSE_SHELL_SCRIPT_EXECUTE_END"
+		then
+			break
+		else
+				echo "${line}" >> "${tmp}"
+		fi
 	done
 }
 
@@ -19,21 +19,22 @@ if test $# != 2
 then
 	echo "usage: sssi <input file> <output file>"
 fi
-input=$1
-output=$2
+input="$1"
+output="$2"
 tmp=/tmp/sssitmpscript
-rm ${output}
-cat ${input} | while read line
+rm -f "${output}"
+cat "${input}" | while read line
 do
 	if test "X${line}" = "X#SPARSE_SHELL_SCRIPT_EXECUTE"
 	then
 		readSssCommand
-		source ${tmp}
+		. "${tmp}"
 	elif test "X${line}" = "X#SPARSE_SHELL_SCRIPT_EXECUTE_AND_INCLUDE_STDOUT"
-    then
+	then
 		readSssCommand
-		source ${tmp} >> ${output}
-    else
-		echo "${line}" >> ${output}
-    fi
+		. "${tmp}" >> "${output}"
+	else
+		echo "${line}" >> "${output}"
+	fi
 done
+rm -f "${tmp}"
