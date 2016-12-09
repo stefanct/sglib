@@ -1,10 +1,10 @@
-// This program sorts its parameters using
-// array sort level 1 interface. 
-// For example:
-//   a.out 6 7 3 4 1 5
-// writes
-//   1 3 4 5 6 7
-
+/* This program sorts its parameters using
+   array sort level 1 interface. 
+   For example:
+     a.out 6 7 3 4 1 5
+   writes
+     1 3 4 5 6 7
+*/
 
 #include <stdio.h>
 #include <stdlib.h>

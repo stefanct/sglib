@@ -1,10 +1,10 @@
-// This program sorts its parameters using 
-// insertion into sorted list (level 1 interface). 
-// For example:
-//   a.out 6 7 3 4 1 5
-// writes
-//   1 3 4 5 6 7
-
+/* This program sorts its parameters using 
+   insertion into sorted list (level 1 interface). 
+   For example:
+     a.out 6 7 3 4 1 5
+   writes
+     1 3 4 5 6 7
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,15 +30,15 @@ int main(int argc, char **argv) {
     sscanf(argv[i],"%d", &a);
     l = malloc(sizeof(struct ilist));
     l->i = a;
-    // insert the new element into the list while keeping it sorted
+    /* insert the new element into the list while keeping it sorted */
     sglib_iListType_add(&the_list, l);
   }
-  // print the list
+  /* print the list */
   for (l=the_list; l!=NULL; l=l->next_ptr) {
     printf("%d ", l->i);
   }
   printf("\n");
-  // free all
+  /* free all */
   for(l=sglib_iListType_it_init(&it,the_list); l!=NULL; l=sglib_iListType_it_next(&it)) {
     free(l);  
   }
