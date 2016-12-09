@@ -1,10 +1,10 @@
-// This program sorts its parameters using 
-// list sort (level 0 interface).
-// For example:
-//   a.out 6 7 3 4 1 5
-// writes
-//   1 3 4 5 6 7
-
+/* This program sorts its parameters using 
+   list sort (level 0 interface).
+   For example:
+     a.out 6 7 3 4 1 5
+   writes
+     1 3 4 5 6 7
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,7 +20,7 @@ struct ilist {
 
 int main(int argc, char **argv) {
   int i,a;
-  struct ilist *l, *the_list, *ll;
+  struct ilist *l, *the_list;
   the_list = NULL;
   for (i=1; i<argc; i++) {
     sscanf(argv[i],"%d", &a);
@@ -28,16 +28,16 @@ int main(int argc, char **argv) {
     l->i = a;
     SGLIB_LIST_ADD(struct ilist, the_list, l, next_ptr);
   }
-  // it is useless, but anyway, get parameters in the right order
+  /* it is useless, but anyway, get parameters in the right order */
   SGLIB_LIST_REVERSE(struct ilist, the_list, next_ptr);
-  // now sort them
+  /* now sort them */
   SGLIB_LIST_SORT(struct ilist, the_list, ILIST_COMPARATOR, next_ptr);
-  // print the list
+  /* print the list */
   SGLIB_LIST_MAP_ON_ELEMENTS(struct ilist, the_list, ll, next_ptr, {
     printf("%d ", ll->i);
   });
   printf("\n");
-  // free all
+  /* free all */
   SGLIB_LIST_MAP_ON_ELEMENTS(struct ilist, the_list, ll, next_ptr, {
     free(ll);
   });

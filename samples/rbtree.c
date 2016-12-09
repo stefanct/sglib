@@ -1,10 +1,11 @@
-// This program uses red-black tree to
-// remove multiple occurences of the same
-// value from its paramaters.
-// For example:
-//   a.out 6 7 3 4 1 4 1 3 5
-// writes:
-//   1 3 4 5 6 7
+/* This program uses red-black tree to
+   remove multiple occurences of the same
+   value from its paramaters.
+   For example:
+     a.out 6 7 3 4 1 4 1 3 5
+   writes:
+     1 3 4 5 6 7
+*/
 
 
 #include <stdio.h>
@@ -21,8 +22,8 @@ typedef struct rbtree {
 
 #define CMPARATOR(x,y) ((x->n)-(y->n))
 
-SGLIB_DEFINE_RBTREE_PROTOTYPES(rbtree, left, right, color_field, CMPARATOR);
-SGLIB_DEFINE_RBTREE_FUNCTIONS(rbtree, left, right, color_field, CMPARATOR);
+SGLIB_DEFINE_RBTREE_PROTOTYPES(rbtree, left, right, color_field, CMPARATOR)
+SGLIB_DEFINE_RBTREE_FUNCTIONS(rbtree, left, right, color_field, CMPARATOR)
 
 int main(int argc, char **argv) {
   int                           i,a;

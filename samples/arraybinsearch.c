@@ -1,10 +1,10 @@
-// This program sorts its parameters using
-// binary search to implement insert sort.
-// For example:
-//   a.out 6 7 3 4 1 5
-// writes
-//   1 3 4 5 6 7
-
+/* This program sorts its parameters using
+   binary search to implement insert sort.
+   For example:
+     a.out 6 7 3 4 1 5
+   writes
+     1 3 4 5 6 7
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
   for(i=1; i<size; i++) {
     tmp = a[i];
     SGLIB_ARRAY_BINARY_SEARCH(int, a, 0, i, tmp, SGLIB_NUMERIC_COMPARATOR, found, index);
+    (void)(found);
     memmove(a+index+1, a+index, (i-index)*sizeof(int));
     a[index]=tmp;
   }

@@ -1,9 +1,10 @@
-// This program uses hash table containing lists
-// to remove multiple occurences of its parameters
-// For example:
-//   a.out 1 3 1 5 2 3 1 7 11 33 11
-// writes:
-//   11 1 2 33 3 5 7
+/* This program uses hash table containing lists
+   to remove multiple occurences of its parameters
+   For example:
+     a.out 1 3 1 5 2 3 1 7 11 33 11
+   writes:
+     11 1 2 33 3 5 7
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,7 +32,7 @@ SGLIB_DEFINE_HASHED_CONTAINER_PROTOTYPES(ilist, HASH_TAB_SIZE, ilist_hash_functi
 SGLIB_DEFINE_HASHED_CONTAINER_FUNCTIONS(ilist, HASH_TAB_SIZE, ilist_hash_function)
 
 int main(int argc, char **argv) {
-  int                                   i, ai,aj, n;
+  int                                   i, n;
   struct ilist                          ii, *nn, *ll;
   struct sglib_hashed_ilist_iterator    it;
 
