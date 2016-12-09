@@ -1,4 +1,4 @@
-/* 
+/*
 
   This is SGLIB version 1.0.4
 
@@ -33,7 +33,7 @@
 /* ------------------------------ STATIC ARRAYS ------------------------------- */
 /* ---------------------------------------------------------------------------- */
 
-/* 
+/*
 
   Basic algorithms  for sorting arrays. Multiple  depending arrays can
   be rearranged using user defined 'elem_exchangers'
@@ -251,7 +251,7 @@
   table occurs on exactly one index.  Once an object is stored in the
   table, it can be represented via its index.
 
-  In case of collision while adding an object the index shifted 
+  In case of collision while adding an object the index shifted
   by SGLIB_HASH_TAB_SHIFT_CONSTANT (constant can be redefined)
 
   You can NOT delete an element from such hash table. The only
@@ -259,7 +259,7 @@
   file format, having an index table at the beginning and then
   refering objects via indexes.
 
-  !!!!!!! This data structure is NOT documented, do not use it !!!!!!!!!! 
+  !!!!!!! This data structure is NOT documented, do not use it !!!!!!!!!!
 
 */
 
@@ -924,7 +924,7 @@
 
 /* ------------------------ hashed table  (level 1) ------------------------- */
 /*
- 
+
   sglib's hash table is an array storing directly pointers to objects (not containers).
   In this table there is a one-to-one mapping between 'objects' stored
   in the table and indexes where they are placed. Each index is
@@ -937,7 +937,7 @@
   hash_function - is a hashing function mapping type* to unsigned
   comparator    - is a comparator on elements
 
-  !!!!!!! This data structure is NOT documented, do not use it !!!!!!!!!! 
+  !!!!!!! This data structure is NOT documented, do not use it !!!!!!!!!!
 */
 
 #define SGLIB_DEFINE_HASHED_TABLE_PROTOTYPES(type, dim, hash_function, comparator) \
@@ -1007,7 +1007,7 @@
 
 
 /* ------------------- hashed container (only for level 1)  -------------------- */
-/* 
+/*
   hashed container is a table of given fixed size containing another
   (dynamic) base container in each cell. Once an object should be
   inserted into the hashed container, a hash function is used to
@@ -1019,7 +1019,7 @@
   parameters:
   type - the type of the container stored in each cell.
   dim  - the size of the hashed array
-  hash_function - the hashing function hashing 'type *' to unsigned.  
+  hash_function - the hashing function hashing 'type *' to unsigned.
 
 */
 
@@ -1090,7 +1090,7 @@
     return(e);\
   }\
   type *sglib_hashed_##type##_it_init(struct sglib_hashed_##type##_iterator *it, type *table[dim]) {\
-	return(sglib_hashed_##type##_it_init_on_equal(it, table, NULL, NULL));\
+    return(sglib_hashed_##type##_it_init_on_equal(it, table, NULL, NULL));\
   }\
   type *sglib_hashed_##type##_it_current(struct sglib_hashed_##type##_iterator *it) {\
     return(sglib_##type##_it_current(&it->containerIt));\
@@ -1195,7 +1195,7 @@
    ce = it->nextelem;\
    it->nextelem = NULL;\
    if (it->subcomparator != NULL) {\
-	 eq = it->equalto; \
+     eq = it->equalto; \
      scp = it->subcomparator;\
      while (ce!=NULL && scp(ce, eq)!=0) ce = ce->next;\
    }\
@@ -1281,7 +1281,7 @@
    ce = it->nextelem;\
    it->nextelem = NULL;\
    if (it->subcomparator != NULL) {\
-	 eq = it->equalto; \
+     eq = it->equalto; \
      scp = it->subcomparator;\
      while (ce!=NULL && (c=scp(ce, eq)) < 0) ce = ce->next;\
      if (ce != NULL && c > 0) ce = NULL;\
@@ -1409,7 +1409,7 @@
    ce = it->prevelem;\
    it->prevelem = NULL;\
    if (it->subcomparator != NULL) {\
-	 eq = it->equalto; \
+     eq = it->equalto; \
      scp = it->subcomparator;\
      while (ce!=NULL && scp(eq, ce)!=0) ce = ce->previous;\
    }\
@@ -1419,7 +1419,7 @@
      ce = it->nextelem;\
      it->nextelem = NULL;\
      if (it->subcomparator != NULL) {\
-	   eq = it->equalto; \
+       eq = it->equalto; \
        scp = it->subcomparator;\
        while (ce!=NULL && scp(ce, eq)!=0) ce = ce->next;\
      }\

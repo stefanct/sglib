@@ -1,5 +1,5 @@
-/* This program sorts its parameters using 
-   insertion into sorted list (level 0 interface). 
+/* This program sorts its parameters using
+   insertion into sorted list (level 0 interface).
    For example:
      a.out 6 7 3 4 1 5
    writes

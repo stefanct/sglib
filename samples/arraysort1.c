@@ -1,5 +1,5 @@
 /* This program sorts its parameters using
-   array sort level 1 interface. 
+   array sort level 1 interface.
    For example:
      a.out 6 7 3 4 1 5
    writes

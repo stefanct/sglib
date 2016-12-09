@@ -24,24 +24,24 @@ int main(int argc, char **argv) {
   // echo parameters using a queue
   SGLIB_QUEUE_INIT(int, a, ai, aj);
   for (i=1; i<argc; i++) {
-	sscanf(argv[i],"%d", &n);
-	SGLIB_QUEUE_ADD(int, a, n, ai, aj, MAX_PARAMS);
+    sscanf(argv[i],"%d", &n);
+    SGLIB_QUEUE_ADD(int, a, n, ai, aj, MAX_PARAMS);
   }
   while(! SGLIB_QUEUE_IS_EMPTY(int, a, ai, aj)) {
-	printf("%d ", SGLIB_QUEUE_FIRST_ELEMENT(int, a, ai, aj));
-	SGLIB_QUEUE_DELETE(int, a, ai, aj, MAX_PARAMS);
+    printf("%d ", SGLIB_QUEUE_FIRST_ELEMENT(int, a, ai, aj));
+    SGLIB_QUEUE_DELETE(int, a, ai, aj, MAX_PARAMS);
   }
   printf("\n");
 
   // print parameters in descending order
   SGLIB_HEAP_INIT(int, a, ai);
   for (i=1; i<argc; i++) {
-	sscanf(argv[i],"%d", &n);
-	SGLIB_HEAP_ADD(int, a, n, ai, MAX_PARAMS, SGLIB_NUMERIC_COMPARATOR);
+    sscanf(argv[i],"%d", &n);
+    SGLIB_HEAP_ADD(int, a, n, ai, MAX_PARAMS, SGLIB_NUMERIC_COMPARATOR);
   }
   while(! SGLIB_HEAP_IS_EMPTY(int, a, ai)) {
-	printf("%d ", SGLIB_HEAP_FIRST_ELEMENT(int, a, ai));
-	SGLIB_HEAP_DELETE(int, a, ai, MAX_PARAMS, SGLIB_NUMERIC_COMPARATOR);
+    printf("%d ", SGLIB_HEAP_FIRST_ELEMENT(int, a, ai));
+    SGLIB_HEAP_DELETE(int, a, ai, MAX_PARAMS, SGLIB_NUMERIC_COMPARATOR);
   }
   printf("\n");
 
