@@ -1,5 +1,5 @@
-/* This program sorts its parameters using 
-   insertion into sorted list (level 1 interface). 
+/* This program sorts its parameters using
+   insertion into sorted list (level 1 interface).
    For example:
      a.out 6 7 3 4 1 5
    writes
@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
   printf("\n");
   /* free all */
   for(l=sglib_iListType_it_init(&it,the_list); l!=NULL; l=sglib_iListType_it_next(&it)) {
-    free(l);  
+    free(l);
   }
   return(0);
 }

@@ -1,4 +1,4 @@
-/* This program sorts its parameters using 
+/* This program sorts its parameters using
    list sort (level 0 interface).
    For example:
      a.out 6 7 3 4 1 5
