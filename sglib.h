@@ -588,7 +588,7 @@
     (first) = (second);\
   } else if ((second)!=NULL) {\
     type *_dlp_;\
-    for(_dlp_ = (first); _dlp_->next!=NULL; _dlp_=_dlp_->next) ;\
+    for(_dlp_ = (first); _dlp_->next!=NULL; _dlp_=_dlp_->next) { };\
     SGLIB_DL_LIST_ADD_AFTER(type, _dlp_, second, previous, next);\
   }\
 }
@@ -650,7 +650,7 @@
   type *_dll_;\
   _dll_ = (list);\
   if (_dll_ != NULL) {\
-    for(; _dll_->previous!=NULL; _dll_=_dll_->previous) ;\
+    for(; _dll_->previous!=NULL; _dll_=_dll_->previous) { };\
     SGLIB_LIST_SORT(type, _dll_, comparator, next);\
     SGLIB___DL_LIST_CREATE_FROM_LIST(type, _dll_, previous, next);\
     (list) = _dll_;\
