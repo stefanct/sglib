@@ -2,7 +2,7 @@ runall: arraysort arraysort1 arraybinsearch listsort listinsertsort listinsertso
 	+make clean
 
 %.exe: %.c ../sglib.h
-	gcc -std=gnu89 -Wall -Wextra -pedantic -Wno-unused-function -I.. $*.c -o $*.exe
+	$(CC) -std=gnu89 -Wall -Wextra -pedantic -Wno-unused-function -I.. $*.c -o $*.exe
 
 arraysort: arraysort.exe ../sglib.h
 	./$< 6 7 3 4 1 4 1 3 5
