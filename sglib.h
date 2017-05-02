@@ -852,7 +852,7 @@
   return(SGLIB_QUEUE_IS_EMPTY(elem_type, q->afield, q->ifield, q->jfield));\
  }\
  int sglib_##queue_type##_is_full(queue_type *q) {\
-  return(SGLIB_QUEUE_IS_FULL(elem_type, q->afield, q->ifield, q->jfield));\
+  return(SGLIB_QUEUE_IS_FULL(elem_type, q->afield, q->ifield, q->jfield, dim));\
  }\
  elem_type sglib_##queue_type##_first_element(queue_type *q) {\
   return(SGLIB_QUEUE_FIRST_ELEMENT(elem_type, q->afield, q->ifield, q->jfield));\
